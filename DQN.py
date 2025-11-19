@@ -74,11 +74,22 @@ class DQN(nn.Module):
     # this will be handled automatically by loss.backward() and
     # through PyTorch convenience/magic
         
-    def loadWeights(self, sourceNtework):
+    def loadModel(self, filename):
         """ Load weights from a saved copy of the network """
-        pass
+        model = torch.load(filename, weights_only = False)
+        self.load_state_dict(model)
 
-    def saveWeights(self):
+    def saveModel(self, filename):
         """ Save existing weights of the network to a file """
+        torch.save(self.state_dict(), filename)
+
+    def __repr__(self):
+        s = ''
+        style = "RGB" if self.RGB else "grayscale"
+        s += f"Network is being processing input images as {style}\n"
+        s += f"Input width:  {self.width}\n"
+        s += f"Input height: {self.height}\n"
+        s += str(self.network)
         
-        pass
+        
+        return( s )
