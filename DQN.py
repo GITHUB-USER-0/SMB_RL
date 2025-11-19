@@ -66,7 +66,9 @@ class DQN(nn.Module):
 
     def forward(self, x):
         """ Perform a forward pass on the model """
-        pass
+        y = self.network(x)
+
+        return(y)
 
     # note, no need to define a loss function,
     # this will be handled automatically by loss.backward() and
