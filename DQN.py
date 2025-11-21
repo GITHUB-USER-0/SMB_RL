@@ -86,7 +86,7 @@ class DQN(nn.Module):
     def __repr__(self):
         s = ''
         style = "RGB" if self.RGB else "grayscale"
-        s += f"Network is being processing input images as {style}\n"
+        s += f"Network is processing input images as {style}\n"
         s += f"Input width:  {self.width}\n"
         s += f"Input height: {self.height}\n"
         s += str(self.network)
