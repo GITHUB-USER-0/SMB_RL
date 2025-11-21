@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 savedModels/bar5005.pth
 savedModels/foo5004.pth
+*.png
