@@ -17,8 +17,8 @@ class ReplayBuffer():
         self.shape = shape
         
         self.phi       = torch.zeros( (size, *shape) )
-        self.action    = torch.zeros( (size) )
-        self.reward    = torch.zeros( (size) )
+        self.action    = torch.zeros( (size), dtype = torch.int32 ) #specify int, otherwise float
+        self.reward    = torch.zeros( (size), dtype = torch.int64 ) #likewise
         self.nextState = torch.zeros( (size, *shape) )
 
         self.probabilities = torch
@@ -57,8 +57,10 @@ class ReplayBuffer():
 
         # original source does not specify with or without replacement
         # as is, this does not allow replacement
-        indices = torch.randperm(self.size)[0 : minibatches]
-
+        #indices = torch.randperm(self.size)[0 : minibatches]
+        # faster implementation suggested by generative AI
+        indices = torch.randint(0, self.size, (minibatches, )) 
+        
         result = (
             self.phi[indices],
             self.action[indices],
@@ -74,5 +76,6 @@ class ReplayBuffer():
         s += f"{self.size = }\n"
         s += f"{self.shape = }\n"
         s += f"{self.index = }\n"
+        s += f"{self.action[0] = }\n"
 
         return(s)
