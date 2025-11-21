@@ -37,31 +37,29 @@ class DQN(nn.Module):
 
         PADDING = 0
         STRIDE = 2
+
+        # significantly decreased the sizes of these based on
+        # generative AI / LLM feedback
+        self.featureExtractor = nn.Sequential(
+            nn.Conv2d(IC1, OC1, kernel_size=3, stride=STRIDE),
+            nn.AdaptiveMaxPool2d(( 64, 64 )),
+            nn.Conv2d(IC2, OC2, kernel_size=3, stride=STRIDE),
+            nn.AdaptiveMaxPool2d(( 32, 32 )),
+            nn.Conv2d(IC3, OC3, kernel_size=3, stride=STRIDE),
+            nn.AdaptiveAvgPool2d(( 16, 16)),
+            nn.Flatten()
+        )
         
-        self.network = nn.Sequential(
-            nn.Conv2d(in_channels = IC1, 
-                      out_channels = OC1, 
-                      kernel_size = 3, 
-                      padding = PADDING,
-                      stride = STRIDE),
-            nn.AdaptiveMaxPool2d( (width // 2, height // 2) ), # note integer division
-            nn.Conv2d(in_channels = IC2,
-                      out_channels = OC2,
-                      kernel_size = 3,
-                      padding = PADDING,
-                      stride = STRIDE),
-            nn.AdaptiveMaxPool2d( (width // 4, height // 4) ),
-            nn.Conv2d(in_channels = IC3,
-                      out_channels = OC3,
-                      kernel_size = 3,
-                      padding = PADDING,
-                      stride = STRIDE),
-            nn.AdaptiveAvgPool2d( (width // 8, height // 8) ),
-            nn.Flatten(),
-            nn.Linear(OC3 * width // 8 * height // 8, actionSpaceSize * 4),
+        self.fc = nn.Sequential(
+            nn.Linear(16_384, 512), #16,384 = 64 * 16 * 16
+            nn.ReLU(),
+            nn.Linear(512, actionSpaceSize * 4),
             nn.ReLU(),
             nn.Linear(actionSpaceSize * 4, actionSpaceSize)
         )
+        
+        self.network = nn.Sequential(self.featureExtractor, self.fc)
+
 
 
     def forward(self, x):
