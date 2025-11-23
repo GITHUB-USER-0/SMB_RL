@@ -56,10 +56,10 @@ from itertools import combinations # combinations for a complete actionSpace
 # ------------------------------------
 # functions
 def prefillBuffer(BUFFER_SIZE, env, actionSpace):
-    """ prefill the replay buffer.
+    """ prefill the replay buffer
 
-    Note that if random levels are selected, it seems plausible that the 
-    buffer size may need to be much larger.
+    Note that if random levels are selected outside this function, it is likely that the 
+    buffer size may need to be much larger than if one focused on just one level.
     """
 
     # grayscale
@@ -68,23 +68,28 @@ def prefillBuffer(BUFFER_SIZE, env, actionSpace):
     # need an environment to get transitions
     state, info = env.reset(seed = seed) if SEED else env.reset()
 
+    # uniform random action selection
+    # it may be worth pre-weighting here with TAS inputs
+    # see 'on TAS and ROMs.ipynb'
+    # Space.sample(probability) as per: https://gymnasium.farama.org/api/spaces/
     state, reward, terminated, truncated, info = env.step(env.action_space.sample())
 
-    i = 0 # counter of transitions filled into buffer
-    j = 0 # counter of per-level transitions, 
-          # helps to avoid having too many transitions from one level
-    resetCount = 0
-    while i < BUFFER_SIZE:
+
+    resetCount              = 0
+    transitionCount         = 0 # counter of transitions filled into buffer
+    transitionsCurrentLevel = 0 # counter of per-level transitions, 
+                                # helps to avoid having too many transitions from one level
+    while transitionCount < BUFFER_SIZE:
         
         old_state = state
         state, reward, terminated, truncated, info = env.step(env.action_space.sample())
 
-        # reset if d, aones one cannot step after death
-        if terminated or truncated or j % (BUFFER_SIZE // 10) == 0:
+        # reset environment if dead, or too many samples from current environment
+        if terminated or truncated or transitionsCurrentLevel % (BUFFER_SIZE // 10) == 0:
             state, info = env.reset(seed = seed) if SEED else env.reset()
             state, reward, terminated, truncated, info = env.step(env.action_space.sample())
             resetCount += 1
-            j = 0
+            transitionsCurrentLevel = 0
             next
             
         rb.storeTransition((
@@ -94,8 +99,8 @@ def prefillBuffer(BUFFER_SIZE, env, actionSpace):
             preprocessFrame(state)
         ))
 
-        i += 1
-        j += 1
+        transitionCount += 1
+        transitionsCurrentLevel += 1
 
         if BUFFER_SIZE > 10:
             if i % (BUFFER_SIZE // 10) == 0:
