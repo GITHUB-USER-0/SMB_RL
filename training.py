@@ -43,6 +43,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from random import randint, random
 
+import sys #argument handling
+
 #from collections import deque
 import torch
 import torch.optim as optim
@@ -439,33 +441,38 @@ for i in range(1, len(ALL_BUTTONS) + 1): # do not include the empty permutation
 # ------------------------------------
 # training
 
-print(f"Original frame size (H x W): {FRAME_HEIGHT} x {FRAME_WIDTH}")
-print(f"Trimmed frame size (H x W): {TRIM_FRAME_HEIGHT} x {TRIM_FRAME_WIDTH}") 
-print(f"Downscaled frame size (H x W): {ADJ_FRAME_HEIGHT} x {ADJ_FRAME_WIDTH}")
+if __name__ == "__main__":
 
+    if len(sys.argv) > 1:
+        print("Received additional options:", sys.argv[1:])
 
-## Initialize action-value function Q with random weights 
-print("\n---\nInitializing Deep Q Network")
-# Q = DQN(actionSpaceSize = len(BASIC_ACTION_SPACE),
-#         RGB = False,
-#         width  = ADJ_FRAME_WIDTH,
-#         height = ADJ_FRAME_HEIGHT)
+    
+    print(f"Original frame size (H x W): {FRAME_HEIGHT} x {FRAME_WIDTH}")
+    print(f"Trimmed frame size (H x W): {TRIM_FRAME_HEIGHT} x {TRIM_FRAME_WIDTH}") 
+    print(f"Downscaled frame size (H x W): {ADJ_FRAME_HEIGHT} x {ADJ_FRAME_WIDTH}")
+    
+    
+    ## Initialize action-value function Q with random weights 
+    print("\n---\nInitializing Deep Q Network")
+    # Q = DQN(actionSpaceSize = len(BASIC_ACTION_SPACE),
+    #         RGB = False,
+    #         width  = ADJ_FRAME_WIDTH,
+    #         height = ADJ_FRAME_HEIGHT)
 
-Q = DQN( 
-    (1, ADJ_FRAME_WIDTH, ADJ_FRAME_HEIGHT),
-    len(ACTION_SPACE_IN_USE))
-
-print("Q-network info")
-print(f"{Q =}")
-print(f"{Q.n_flat = }")
-print("A sample output's shape from the feature extractor: ", Q.featureExtractor(torch.zeros(1,1,ADJ_FRAME_WIDTH,ADJ_FRAME_HEIGHT)).shape)
-
-optimizer = optim.Adam(Q.parameters(), lr=LEARNING_RATE)
-
-print("\n---\nInitializing gymnasium environment")
-env, actionSpace = initializeEnvironment(ACTION_SPACE_IN_USE, rom = ROM)
-print(f"environment initialized with rom: {ROM}")
-
-## Initialize replay memory D to capacity N
-print("\n---\nInitializing replay memory buffer")
-D = prefillBuffer(BUFFER_SIZE, env, actionSpace)
+    Q = DQN( input_shape = (1, ADJ_FRAME_WIDTH, ADJ_FRAME_HEIGHT),
+             num_actions = len(ACTION_SPACE_IN_USE))
+    
+    print("Q-network info")
+    print(f"{Q =}")
+    print("A sample output's shape from the feature extractor: ", Q.featureExtractor(torch.zeros(1,1,ADJ_FRAME_WIDTH,ADJ_FRAME_HEIGHT)).shape)
+    
+    optimizer = optim.Adam(Q.parameters(), lr=LEARNING_RATE)
+    
+    print("\n---\nInitializing gymnasium environment")
+    env, actionSpace = initializeEnvironment(ACTION_SPACE_IN_USE, rom = ROM)
+    print(f"environment initialized with rom: {ROM}")
+    
+    ## Initialize replay memory D to capacity N
+    print("\n---\nInitializing replay memory buffer")
+    D = prefillBuffer(BUFFER_SIZE, env, actionSpace)
+    print(f"Buffer filled with {BUFFER_SIZE} transitions.")
