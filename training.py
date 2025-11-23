@@ -207,10 +207,19 @@ def initializeEnvironment(mode, randomLevel = True, rom = 'v3'):
 
     return( (env, actionSpace_init) )
 
-def save_diagnostic_image(folder, frameArray, step, action, x_pos, y_pos, rectangle):
-    """ Save a snapshot with additional text info burned in."""
+def saveDiagnosticImage(folder, frameArray, step, action, x_pos, y_pos, rectangle):
+    """ Save a snapshot with additional text info burned in.
+    
+    Inputs:
+        folder - the folder in which to save images, NB., one folder per episode 
+        frameArray - TODO, standardize, revise with prefillbuffer
+        step, action - current step and action for burning in
+        x_pos, y_pos - current x and y position for burning in
+        
+        """
 
-    ## assistance from generativeAI
+    ## this method had meaningful assistance from generativeAI
+    ## TODO: this should be revised for the workflow actually in use with additional documentation
     # Convert torch.Tensor to NumPy
     if isinstance(frameArray, torch.Tensor):
         frame = frameArray.detach().cpu()
@@ -226,18 +235,6 @@ def save_diagnostic_image(folder, frameArray, step, action, x_pos, y_pos, rectan
 
     image = Image.fromarray(frame)
     
-    """
-    if isinstance(frameArray, torch.Tensor):
-        frame = frameArray.detach().cpu().numpy()
-        if frame.shape[0] == 1:  # Grayscale
-            frame = frame.squeeze(0)
-        else:  # RGB
-            frame = frame.permute(1, 2, 0)
-        image = Image.fromarray(frame)
-    ## end generative AI
-    else:
-        image = Image.fromarray(frameArray.copy())
-    """
     draw = ImageDraw.Draw(image)
     ## fails in TensorFlow environment
     #font = ImageFont.truetype("arial.ttf", size = 20)
@@ -258,7 +255,7 @@ def save_diagnostic_image(folder, frameArray, step, action, x_pos, y_pos, rectan
  
     # use of padding in filename is helpful for passing 
     # in to Kdenlive as an Image Sequence for video review
-    # in quick testing, .png was actually smaller than .jpeg
+    # in quick testing, .png files were smaller than .jpeg
     image.save(f"./{folder}/{step:0>6}_{monotonic()}.png")
 
 def selectAction(phi):
@@ -374,8 +371,8 @@ def runEpisode(seed = None,
             if step % saveImageFrequency == 0:
                 rawRectangle = [0, 0, 70, 50]
                 preproRectangle = [0, 0, 70, 50]
-                save_diagnostic_image(rawDir, state, step, action_text, info['x_pos'], info['y_pos'], rawRectangle)
-                save_diagnostic_image(preproDir, phi * 255.0, step, action_text, info['x_pos'], info['y_pos'], preproRectangle)
+                saveDiagnosticImage(rawDir, state, step, action_text, info['x_pos'], info['y_pos'], rawRectangle)
+                saveDiagnosticImage(preproDir, phi * 255.0, step, action_text, info['x_pos'], info['y_pos'], preproRectangle)
 
         # diagnostic info printing
         # print periodically, and as mario is timing out
