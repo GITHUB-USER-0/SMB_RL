@@ -152,13 +152,13 @@ def preprocessFrame(frame):
     
     return(frame)
 
-def initialize_environment(mode, randomLevel = True, rom = 'v3'):
+def initializeEnvironment(mode, randomLevel = True, rom = 'v3'):
     """Initialize environment in gymnasium. 
     Sets the list of acceptable actions.
 
     Inputs:
         mode - the set of available actions, either from JoypadSpace, or
-               a custom set of actions
+               a custom set of actions provided as a list of lists of actions
         rom - the selected ROM
     Outputs:
         (env, actionSpace_init) - a tuple of the gymnasium environment and actionSpace
@@ -179,15 +179,17 @@ def initialize_environment(mode, randomLevel = True, rom = 'v3'):
         s = 'SuperMarioBros-v0'
     elif rom == 'v3':
         s = 'SuperMarioBros-v3'
+    else:
+        print("Error in ROM selection.")
+        return(None)
 
-    # as per documentation, SuperMarioBrosRandomStages-v0 would randomly select
+    # as per documentation, SuperMarioBrosRandomStages-v0 will randomly select world, level combinations
     if randomLevel:
         s = s.split('-')
         s = 'RandomStages-'.join(s)
     
     env = gym_super_mario_bros.make(s)
 
-    
     if mode == "simple":
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         actionSpace_init = SIMPLE_MOVEMENT
@@ -199,6 +201,7 @@ def initialize_environment(mode, randomLevel = True, rom = 'v3'):
         actionSpace_init = RIGHT_ONLY
     else:
         # provide a predefined list of string actions
+        # eg., [['NOOP'], ['right', 'A'], ['right', 'B'], ['right', 'B', 'A']]
         env = JoypadSpace(env, mode)
         actionSpace_init = mode
 
@@ -463,7 +466,7 @@ print("A sample output's shape from the feature extractor: ", Q.featureExtractor
 optimizer = optim.Adam(Q.parameters(), lr=LEARNING_RATE)
 
 print("\n---\nInitializing gymnasium environment")
-env, actionSpace = initialize_environment(ACTION_SPACE_IN_USE, rom = ROM)
+env, actionSpace = initializeEnvironment(ACTION_SPACE_IN_USE, rom = ROM)
 print(f"environment initialized with rom: {ROM}")
 
 ## Initialize replay memory D to capacity N
