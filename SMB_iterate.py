@@ -49,7 +49,7 @@ def save_diagnostic_image(frameArray, step, action, x_pos, y_pos):
     # use of padding in filename is helpful for passing 
     # in to Kdenlive as an Image Sequence for video review
     # in quick testing, .png was actually smaller than .jpeg
-    image.save(f"./states/{step:0>6}_{monotonic()}.png")
+    image.save(f"../stateSequences/{step:0>6}_{monotonic()}.png")
     
 
 def initialize_environment(mode, rom):
