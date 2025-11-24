@@ -107,7 +107,7 @@ def prefillBuffer(BUFFER_SIZE, env, actionSpace):
         transitionCount += 1
         transitionsCurrentLevel += 1
 
-        if BUFFER_SIZE > 10:
+        if BUFFER_SIZE >= 100:
             if i % (BUFFER_SIZE // 10) == 0:
                 print(f"Filling buffer slot {i} of {BUFFER_SIZE}")
     print(f"Filling buffer sampled from {resetCount} level starts (not guaranteed unique)") 
