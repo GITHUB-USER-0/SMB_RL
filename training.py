@@ -408,6 +408,11 @@ def runEpisode(seed = None,
 
 
 def runEpisodes(numEpisodes):
+    resultFolder = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+    resultFolder = f"./savedModels/{resultFolder}/"
+    print(f"Saving models  to : {resultFolder}")
+    os.mkdir(resultFolder)
+
     results = []
 
     emitConfig()
@@ -429,6 +434,8 @@ def runEpisodes(numEpisodes):
             ri = result['info']
             course = f"{ri['world']}-{ri['stage']}"
             CSV_writer.writerow([i, result['cumulativeReward'], course, ri['flag_get']])
+            if i % 1_000 == 0 or i == 0:
+                Q.saveModel(f"{resultFolder}{i}.pth")
             
     return(results)
 
@@ -466,7 +473,6 @@ LEARNING_RATE = 1e-4
 BASIC_ACTION_SPACE = [['right'], ['left'], ['down'], ['up'], ['B'], ['A'], ['NOOP']]
 
 ACTION_SPACE_IN_USE = [['right'], ['NOOP'], ['right', 'B'], ['right', 'A'], ['down']]
-
     
 
 # ------------------------------------
