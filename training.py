@@ -27,6 +27,9 @@ end for
 import pandas as pd
 import numpy as np
 
+# logging
+import csv
+
 # environment
 import gym_super_mario_bros 
 import nes_py      
@@ -241,7 +244,7 @@ def saveDiagnosticImage(folder, frameArray, step, action, x_pos, y_pos, rectangl
     ## fails in TensorFlow environment
     #font = ImageFont.truetype("arial.ttf", size = 20)
     text_annotation = ""
-    text_annotation += str(f"step: {step:0>6}\naction: {action}\n")
+    text_annotation += str(f"step: {step:0>7}\naction: {action}\n")
     text_annotation += str(f"x: {x_pos:0>3}, y: {y_pos:0>3}\n")
  
     if image.mode == "L":
@@ -258,7 +261,7 @@ def saveDiagnosticImage(folder, frameArray, step, action, x_pos, y_pos, rectangl
     # use of padding in filename is helpful for passing 
     # in to Kdenlive as an Image Sequence for video review
     # in quick testing, .png files were smaller than .jpeg
-    image.save(f"./{folder}/{step:0>6}_{monotonic()}.png")
+    image.save(f"./{folder}/{step:0>7}.png")
 
 def selectAction(phi):
     # select a_t = max_a Q∗(φ(st), a; θ)
@@ -302,7 +305,8 @@ def runEpisode(seed = None,
     """ Run a single episode until death. """
 
     cumulativeReward = 0
-    actions = np.empty(10_000, dtype = int)
+    maxEpisodeLength = 100_000 # in testing, this seems to be reasonable
+    actions = np.empty(maxEpisodeLength, dtype = int)
     actions.fill(-1)
     
     # set up one folder for one episode
@@ -323,10 +327,10 @@ def runEpisode(seed = None,
     if debug: print(f"{phi.shape = } --- should be [1, {ADJ_FRAME_WIDTH}, {ADJ_FRAME_HEIGHT}]")
     
     step = -1
+    
     while True:
         step += 1
 
-        
         # epsilon-greedy or otherwise select a_t = max_a Q^*(φ(st), a; θ) 
         action = selectAction(phi)
         actions[step] = action
@@ -357,10 +361,15 @@ def runEpisode(seed = None,
             optimizer.step()
   
         if terminated or truncated:
+            finalUpdate = f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}"
             if debug:
                 print(f"{terminated=}\n{truncated=}")
                 print(f"{info=}")
-            if printStatus: print(f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}")
+
+            # print terminal status
+            if printStatus:
+                with open('./results/log.txt', 'a') as o:
+                    o.write(f"{finalUpdate}\n")
             break
             
         if saveImage:
@@ -379,27 +388,63 @@ def runEpisode(seed = None,
         # diagnostic info printing
         # print periodically, and as mario is timing out
         if printStatus and (step % printFrequency == 0 or step == 0):
-            print(f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}")
+            update = f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}\n"
+            with open('./results/log.txt', 'a') as o:
+                o.write(update)
+            #print(update)
 
     #pd.DataFrame({'actions' : actions}).to_csv(f'./stateSequences/{timeFolder}/actions.csv')
     #with open(f'./stateSequences/{timeFolder}/setup.txt/') as f:
     #    f.write(f"{cumulativeRewards = }")
+    result = {}
     result['cumulativeReward'] = cumulativeReward
-    result['actions'] = actions
+    #result['actions'] = actions # fixed length
+    result['info'] = info
+    # variable length to just the last action taken
+    #lastActionIndex = np.argmax(actions == -1)
+    #result['actualActions'] = actions[0: lastActionIndex]
+    
     return(result)
 
 
 def runEpisodes(numEpisodes):
     results = []
-    for i in range(numEpisodes):
-        if i % 10 == 0 or i == 0:
-            saveImage, printStatus = True, True
-            print("\n---\nEpisode: ", i)
-        else:
-            saveImage, printStatus = False, False
-        results.append(runEpisode(printStatus = printStatus, saveImage = saveImage))
+
+    emitConfig()
+
+    with open('./results/perEpisodeRewards.csv', 'a', newline = '') as CSV_outfile:
+        CSV_writer = csv.writer(CSV_outfile, delimiter = ',', quotechar = '|', quoting = csv.QUOTE_MINIMAL)
+        CSV_writer.writerow(['episode', 'cumulativeReward', 'course', 'flag_get'])
+        
+        for i in range(numEpisodes):
+            if i % 10 == 0 or i == 0:
+                saveImage, printStatus = True, True
+                with open('./results/log.txt', 'a') as o:
+                    update = f"\n---\nEpisode: {i}\n"
+                    o.write(update)   
+            else:
+                saveImage, printStatus = False, False
+            result = runEpisode(printStatus = printStatus, saveImage = saveImage)
+            results.append(result)
+            ri = result['info']
+            course = f"{ri['world']}-{ri['stage']}"
+            CSV_writer.writerow([i, result['cumulativeReward'], course, ri['flag_get']])
+            
     return(results)
 
+
+def emitConfig():
+    # from global
+    vars = [FRAME_WIDTH, VTRIM, HTRIM, HTRIM_RIGHT, TRIM_FRAME_HEIGHT, TRIM_FRAME_WIDTH, ADJ_FRAME_HEIGHT, ADJ_FRAME_WIDTH, BUFFER_SIZE, SEED, ROM, BATCH_SIZE, GAMMA, LEARNING_RATE, BASIC_ACTION_SPACE, ACTION_SPACE_IN_USE]
+    var_labels = ["FRAME_WIDTH", "VTRIM", "HTRIM", "HTRIM_RIGHT", "TRIM_FRAME_HEIGHT", "TRIM_FRAME_WIDTH", "ADJ_FRAME_HEIGHT", "ADJ_FRAME_WIDTH", "BUFFER_SIZE", "SEED", "ROM", "BATCH_SIZE", "GAMMA", "LEARNING_RATE", "BASIC_ACTION_SPACE", "ACTION_SPACE_IN_USE"]
+
+    with open('./results/log.txt', 'a') as o:
+        o.write("\n---\nStarting new set of episodes\n")
+        o.write(f"{datetime.datetime.now()}\n")
+        
+        for var, label in zip(vars, var_labels):
+            # separate label necessary {var = } will print 'var'
+            o.write(f"{label} = {var}\n") 
             
 # ------------------------------------
 # constants
