@@ -37,7 +37,7 @@ from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 
 # saving outputs
-from time import monotonic  
+# from time import monotonic  
 import os
 #from pathlib import Path # https://stackoverflow.com/questions/273192/how-do-i-create-a-directory-and-any-missing-parent-directories
 import datetime
