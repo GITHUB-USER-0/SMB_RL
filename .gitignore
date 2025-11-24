@@ -210,3 +210,4 @@ savedModels/foo5004.pth
 *.png
 scratch.ipynb
 results/log.txt
+results/perEpisodeRewards.csv
