@@ -1,0 +1,658 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  landscape]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Analysis of a first long training},
+  pdfauthor={Daniel Stornetta (dss2q)},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Analysis of a first long training}
+\author{Daniel Stornetta (dss2q)}
+\date{}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\newpage
+
+\section{Libraries}\label{libraries}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.1.4     v readr     2.1.5
+## v forcats   1.0.0     v stringr   1.5.1
+## v ggplot2   3.5.2     v tibble    3.2.1
+## v lubridate 1.9.4     v tidyr     1.3.1
+## v purrr     1.0.4     
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+## i Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+\end{verbatim}
+
+\section{Loading data}\label{loading-data}
+
+Load in data from an overnight run of the agent on 2025-11-24.
+
+This is from
+\url{https://github.com/GITHUB-USER-0/SMB_RL/tree/50c9b0ed68e16ba5045b846bdbb408ce94178a41}.
+
+Hyperparameters:
+
+\begin{itemize}
+\tightlist
+\item
+  FRAME\_WIDTH = 256
+\item
+  VTRIM = 36
+\item
+  HTRIM = 36
+\item
+  HTRIM\_RIGHT = 16
+\item
+  TRIM\_FRAME\_HEIGHT = 204
+\item
+  TRIM\_FRAME\_WIDTH = 204
+\item
+  ADJ\_FRAME\_HEIGHT = 100
+\item
+  ADJ\_FRAME\_WIDTH = 100
+\item
+  BUFFER\_SIZE = 1000
+\item
+  SEED = None
+\item
+  ROM = v0
+\item
+  BATCH\_SIZE = 32
+\item
+  GAMMA = 0.99
+\item
+  LEARNING\_RATE = 0.0001
+\item
+  ACTION\_SPACE\_IN\_USE = {[}{[}`right'{]}, {[}`NOOP'{]}, {[}`right',
+  `B'{]}, {[}`right', `A'{]}, {[}`A'{]}, {[}`down'{]}{]}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\OtherTok{=} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"./perEpisodeRewards.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 12798 Columns: 4
+## -- Column specification --------------------------------------------------------
+## Delimiter: ","
+## chr (1): course
+## dbl (2): episode, cumulativeReward
+## lgl (1): flag_get
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+\end{verbatim}
+
+Courses were randomly selected across the entire game.
+
+\begin{itemize}
+\tightlist
+\item
+  episode : training episode
+\item
+  cumulativeReward : the reward at the end of the episode using the
+  default reward function
+\item
+  course : the world-stage pairing, eg., ``1-1'' corresponds to world 1,
+  stage 1, the first course of the game. (For additional details see
+  \texttt{/documentation/on\ different\ SMB\ courses.ipynb})
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{head}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 4
+##   episode cumulativeReward course flag_get
+##     <dbl>            <dbl> <chr>  <lgl>   
+## 1       0              324 6-3    FALSE   
+## 2       1              981 2-3    FALSE   
+## 3       2             1085 8-1    FALSE   
+## 4       3              186 8-3    FALSE   
+## 5       4              192 7-1    FALSE   
+## 6       5              173 1-4    FALSE
+\end{verbatim}
+
+A categorization of levels accessed from the
+\href{https://www.mariowiki.com/Super_Mario_Bros.}{Mario Bros.~Wiki}
+available under
+\href{https://creativecommons.org/licenses/by-sa/3.0/}{CC BY-SA 3.0
+license}.
+
+I have added a subcategorization of ``Puzzle'' for three courses based
+on their inclusion of looping segments of the course that can repeat
+until the player runs out of time.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{courseMap }\OtherTok{=} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"level\_categorization.csv"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{courseType =} \FunctionTok{if\_else}\NormalTok{(course }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"4{-}4"}\NormalTok{, }\StringTok{"7{-}4"}\NormalTok{, }\StringTok{"8{-}4"}\NormalTok{), }\FunctionTok{paste0}\NormalTok{(courseType, }\StringTok{", Puzzle"}\NormalTok{), courseType))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 32 Columns: 2
+## -- Column specification --------------------------------------------------------
+## Delimiter: ","
+## chr (2): course, courseType
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{courseMap}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 32 x 2
+##    course courseType 
+##    <chr>  <chr>      
+##  1 1-1    Ground     
+##  2 1-2    Underground
+##  3 1-3    Athletic   
+##  4 1-4    Castle     
+##  5 2-1    Ground     
+##  6 2-2    Underwater 
+##  7 2-3    Athletic   
+##  8 2-4    Castle     
+##  9 3-1    Ground     
+## 10 3-2    Ground     
+## # i 22 more rows
+\end{verbatim}
+
+\newpage
+
+\section{Overview of training
+outcomes}\label{overview-of-training-outcomes}
+
+Comments:
+
+\begin{itemize}
+\tightlist
+\item
+  Outside of sparse high-reward events, it appears that overall rewards
+  were relatively low and stable.
+\item
+  It appears that there was just one level that managed to reach the
+  flag pole (terminal state for a level).
+\item
+  Occasional episodes had very high levels of reward. (\emph{This will
+  ultimately align with the hypothesis I had generated about puzzle
+  levels, see `documentation/on different SMB courses.ipynb'}).
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{episodeCount }\OtherTok{=} \FunctionTok{nrow}\NormalTok{(dat)}
+
+\NormalTok{dat.success }\OtherTok{=}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(flag\_get }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{dat.failure }\OtherTok{=}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(flag\_get }\SpecialCharTok{==} \ConstantTok{FALSE}\NormalTok{)}
+
+\FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{data =}\NormalTok{ dat.failure, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ episode, }\AttributeTok{y =}\NormalTok{ cumulativeReward)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{data =}\NormalTok{ dat.success, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ episode, }\AttributeTok{y =}\NormalTok{ cumulativeReward), }\AttributeTok{color =} \StringTok{"green"}\NormalTok{, }\AttributeTok{size =} \FloatTok{2.5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Episode"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Per{-}episode rewards in Super Mario Bros (1985)"}\NormalTok{,}
+       \AttributeTok{caption =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"Enlarged green observation reflects the only successfully completed level."}\NormalTok{,}
+                        \StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{N="}\NormalTok{, episodeCount))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-5-1} \end{center}
+\newpage
+
+The view of the results when ignoring some of the larger outliers
+suggests no significant increase in performance over time.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(cumulativeReward }\SpecialCharTok{\textless{}} \DecValTok{2500}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{episode\_1000 =}  \FunctionTok{floor}\NormalTok{(episode }\SpecialCharTok{/} \DecValTok{1000}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{episode\_1000 =} \FunctionTok{factor}\NormalTok{(episode\_1000)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ episode\_1000, }\AttributeTok{y =}\NormalTok{ cumulativeReward)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Episode (1,000s grouped)"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Rewards per 1,000 episodes in Super Mario Bros (1985)"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Rewards greater than 2,500 not inclusive"}\NormalTok{,}
+       \AttributeTok{caption =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"Enlarged green observation reflects the only successfully completed level."}\NormalTok{,}
+                        \StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{N="}\NormalTok{, episodeCount))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-6-1} \end{center}
+
+\newpage
+
+\section{Per-course behavior}\label{per-course-behavior}
+
+A look at per-course behavior provides insight to some of the largest
+outliers and provides evidence to support a hypothesis generated before
+testing.
+
+Namely, the reward structure could allow for degenerate reward signaling
+on `puzzle levels' that allow for infinitely scrolling courses when the
+agent takes a looping path, see
+\texttt{/documentation/on\ different\ SMB\ courses.ipynb}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat.nonPuzzle }\OtherTok{=}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\NormalTok{course }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"4{-}4"}\NormalTok{, }\StringTok{"7{-}4"}\NormalTok{, }\StringTok{"8{-}4"}\NormalTok{))}
+\NormalTok{dat.puzzle }\OtherTok{=}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(course }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"4{-}4"}\NormalTok{, }\StringTok{"7{-}4"}\NormalTok{, }\StringTok{"8{-}4"}\NormalTok{))}
+
+\FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ dat.nonPuzzle, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ course, }\AttributeTok{y =}\NormalTok{ cumulativeReward)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ dat.puzzle, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ course, }\AttributeTok{y =}\NormalTok{ cumulativeReward), }\AttributeTok{color =} \StringTok{"orange"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Episode"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Rewards per course in Super Mario Bros (1985)"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{""}\NormalTok{,}
+       \AttributeTok{caption =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"Episodes with puzzle designs highlighted in orange"}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{90}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-7-1} \end{center}
+\newpage
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{left\_join}\NormalTok{(courseMap) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ courseType, }\AttributeTok{y =}\NormalTok{ cumulativeReward, }\AttributeTok{color =}\NormalTok{ courseType)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{() }\SpecialCharTok{+}
+  \CommentTok{\#facet\_wrap( \textasciitilde{} courseType, ncol = 2) +}
+  \CommentTok{\#coord\_cartesian(ylim = c(0, 2500)) +}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{90}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Course type"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Rewards by course type"}\NormalTok{,}
+       \AttributeTok{caption =} \FunctionTok{paste0}\NormalTok{(}\StringTok{"NB., puzzle subcategory added by me, other categorizations as per the Mario Bros Wiki,"}\NormalTok{,}
+       \StringTok{"CC BY{-}SA 3.0.}\SpecialCharTok{\textbackslash{}n}\StringTok{https://www.mariowiki.com/Super\_Mario\_Bros."}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Joining with `by = join_by(course)`
+\end{verbatim}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-8-1} \end{center}
+\newpage
+
+\section{Periodic values from saved
+episodes.}\label{periodic-values-from-saved-episodes.}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(episode }\SpecialCharTok{\%\%} \DecValTok{1000} \SpecialCharTok{==} \DecValTok{0}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rrll@{}}
+\toprule\noalign{}
+episode & cumulativeReward & course & flag\_get \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 324 & 6-3 & FALSE \\
+1000 & 154 & 3-2 & FALSE \\
+2000 & 136 & 3-2 & FALSE \\
+3000 & 166 & 1-4 & FALSE \\
+4000 & 891 & 8-3 & FALSE \\
+5000 & 646 & 2-1 & FALSE \\
+6000 & 1219 & 4-1 & FALSE \\
+7000 & 949 & 8-3 & FALSE \\
+8000 & 227 & 3-3 & FALSE \\
+9000 & 5496 & 4-4 & FALSE \\
+10000 & 440 & 7-2 & FALSE \\
+11000 & 373 & 4-1 & FALSE \\
+12000 & 333 & 2-3 & FALSE \\
+\end{longtable}
+}
+
+\newpage
+
+\section{Summary table}\label{summary-table}
+
+Summary table by course.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summaryTable }\OtherTok{=}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(course) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarize}\NormalTok{(}\AttributeTok{mean\_reward =} \FunctionTok{mean}\NormalTok{(cumulativeReward),}
+            \AttributeTok{sd\_reward =} \FunctionTok{sd}\NormalTok{(cumulativeReward),}
+            \AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{mean\_reward =} \FunctionTok{round}\NormalTok{(mean\_reward, }\DecValTok{2}\NormalTok{),}
+         \AttributeTok{sd\_reward =} \FunctionTok{round}\NormalTok{(sd\_reward, }\DecValTok{2}\NormalTok{))}
+
+\NormalTok{summaryTable }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lrrr@{}}
+\toprule\noalign{}
+course & mean\_reward & sd\_reward & count \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1-1 & 472.10 & 328.58 & 379 \\
+1-2 & 310.91 & 253.63 & 381 \\
+1-3 & 275.80 & 98.17 & 423 \\
+1-4 & 246.30 & 132.84 & 393 \\
+2-1 & 372.98 & 201.99 & 390 \\
+2-2 & 734.25 & 507.59 & 409 \\
+2-3 & 603.28 & 358.75 & 401 \\
+2-4 & 270.85 & 99.03 & 416 \\
+3-1 & 477.08 & 195.37 & 398 \\
+3-2 & 307.11 & 317.31 & 409 \\
+3-3 & 266.63 & 92.94 & 389 \\
+3-4 & 252.88 & 93.35 & 417 \\
+4-1 & 489.06 & 331.04 & 418 \\
+4-2 & 181.59 & 104.46 & 401 \\
+4-3 & 319.61 & 54.55 & 380 \\
+4-4 & 153.84 & 537.59 & 420 \\
+5-1 & 218.03 & 166.08 & 408 \\
+5-2 & 411.60 & 214.51 & 386 \\
+5-3 & 253.58 & 101.45 & 388 \\
+5-4 & 264.73 & 75.75 & 392 \\
+6-1 & 364.28 & 207.22 & 411 \\
+6-2 & 455.09 & 233.26 & 403 \\
+6-3 & 267.12 & 81.00 & 393 \\
+6-4 & 225.27 & 93.38 & 427 \\
+7-1 & 391.57 & 232.65 & 422 \\
+7-2 & 564.34 & 381.81 & 366 \\
+7-3 & 476.61 & 269.86 & 385 \\
+7-4 & 465.36 & 1658.35 & 418 \\
+8-1 & 291.72 & 273.46 & 384 \\
+8-2 & 262.15 & 209.74 & 410 \\
+8-3 & 691.15 & 330.24 & 400 \\
+8-4 & 116.33 & 156.68 & 381 \\
+\end{longtable}
+}
+
+\newpage
+\twocolumn
+
+\section{Commentary}\label{commentary}
+
+Based on a manual review of episodes traces (ie., reviewing saved image
+frames played together in a movie.)
+
+A manual review of episode 0 suggests that it rapidly is valuing the
+rightward movement.
+
+A manual review of episode 9,000 provides several observations:
+
+\begin{itemize}
+\item
+  This is a puzzle level, and the agent is indeed proceeding rightward
+  on a wrong path, allowing it to continue to accumulate rewards.
+\item
+  The reward function uses the delta in x\_position to calculate
+  x\_velocity. However, in stages that loop, there are sudden shifts in
+  x\_position, jumping from approximately 1,060 (highest observed 1,064)
+  to a thousand less. Thus, this results in single reward steps of
+  1,000. This could be argued to be a bug of the environment, but also a
+  suggestion that there should be greater reward
+  stabilization/normalization to prevent learning too much from these
+  blips. More simply, the removal of these levels in training may be
+  appropriate.
+\item
+  \begin{itemize}
+  \item
+    This is supported by how the source code looks at raw RAM values in
+    the emulator.Source code:
+    \url{https://github.com/sajmon83/gymnasium-super-mario-bros/blob/b8f89fbc2da0d495d87b2d6d1e2d56444df73a4b/gym_super_mario_bros/smb_env.py\#L139}
+
+\begin{verbatim}
+def _x_position(self):
+"""Return the current horizontal position."""
+# add the current page 0x6d to the current x
+return int(self.ram[0x6d]) * 0x100 + 
+       int(self.ram[0x86])
+\end{verbatim}
+  \end{itemize}
+\item
+  There is an additional element of state to the agent, where the
+  previously selected actions limit the behavior of a future action. If
+  the agent is `holding down' the `A' button to jump either by itself,
+  or in combination with others, there is 1) a cooldown, and 2) a
+  requirement that the button be released for it to be pressed again.
+  This suggests that the combination of prior actions into a model could
+  be valuable, not just a stacking of prior states.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Not that we are seeking to resolve this with dynamic programming,
+    but this information suggests that the Markov assumption is violated
+    \textbf{if} one is considering only the static frame as the state.
+    If momentum values or prior input presses are part of the state then
+    one could restore this property.
+  \item
+    Regardless of other potential fixes, this also suggests the
+    importance of annealing the epsilon value over time.
+  \end{itemize}
+\item
+  The agent is predominantly holding down {[}`right', `A'{]}, which
+  moves it right and jumps. However, by holding down the `A' button, it
+  is unable to jump unless it releases that button for one or more
+  frames first. The use of an epsilon value of 0.01 appears to be
+  responsible for the jumping observed in this particular episode. Thus,
+  the successful dodging that we observe, may simply be a result of
+  sampling the system many thousands of times and observing successful
+  instances.
+\end{itemize}
+
+\subsection{Additional comments on
+7-4}\label{additional-comments-on-7-4}
+
+It is interesting to note that there are no instances of negative reward
+in the course 7-4. This, in spite of hazards being placed near the start
+of the level. One possible interpretation of this is that the value of
+the remaining time is counterbalancing the lack of x\_position progress,
+as it seems implausible that the agent is not in fact dying in some
+instances. This suggests that for post-mortem analysis, one should have
+the x\_position and y\_position values stored as well, as they are
+helpful (notwithstanding the problems of looping x\_position levels,
+which arguably might benefit from being removed.)
+
+It begs the question of whether a reward signal based on the x\_position
+of the agent, relative to the end of the level might be more
+informative, albeit less generic. Moreover, that would require leaking
+information about the level from the model to the agent, something that
+it should not know from the environment.
+
+\onecolumn
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(course }\SpecialCharTok{==} \StringTok{"7{-}4"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(cumulativeReward }\SpecialCharTok{\textless{}} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 0 x 4
+## # i 4 variables: episode <dbl>, cumulativeReward <dbl>, course <chr>,
+## #   flag_get <lgl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(course }\SpecialCharTok{==} \StringTok{"7{-}4"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(cumulativeReward }\SpecialCharTok{\textless{}} \DecValTok{5000}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ episode, }\AttributeTok{y =}\NormalTok{ cumulativeReward)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Episode"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Rewards in course 7{-}4"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{"Outliers/degenerate rewards removed"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{coord\_cartesian}\NormalTok{(}\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{100}\NormalTok{, }\DecValTok{500}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-14-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(course }\SpecialCharTok{==} \StringTok{"7{-}4"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ episode, }\AttributeTok{y =}\NormalTok{ cumulativeReward)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Episode"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Cumulative Reward (a.u.)"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Rewards in course 7{-}4"}\NormalTok{,}
+       \AttributeTok{subtitle =} \StringTok{""}\NormalTok{)  }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{smb_one_long_training_files/figure-latex/unnamed-chunk-14-2} \end{center}
+
+\end{document}
