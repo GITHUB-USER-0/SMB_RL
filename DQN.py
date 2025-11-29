@@ -10,7 +10,6 @@ class DQN(nn.Module):
         self.input_shape = input_shape
         c, h, w = input_shape
         
-        # Convolutional layers (adjust kernel/stride for NES frames)
         self.featureExtractor = nn.Sequential(
             nn.Conv2d(c, 16, kernel_size=4, stride=4),
             nn.ReLU(),
@@ -21,13 +20,13 @@ class DQN(nn.Module):
             nn.Conv2d(32, 32, kernel_size=3, stride=1),
             nn.ReLU()
         )
-        
+
+        ## with input from generative AI
         # Compute conv output size dynamically
         with torch.no_grad():
             dummy = torch.zeros(1, *input_shape)
             self.n_flat = self.featureExtractor(dummy).view(1, -1).size(1)
         
-        # Fully connected layers
         self.fc = nn.Sequential(
             nn.Linear(self.n_flat, 512),
             nn.ReLU(),
@@ -36,11 +35,11 @@ class DQN(nn.Module):
         
         self.network = nn.Sequential(self.featureExtractor, nn.Flatten(), self.fc)
 
-
-
     def forward(self, x):
         """ Perform a forward pass on the model """
-        #print(f"Forward pass: {x.shape = }")
+        #print(f"Forward pass: {x.shape = }") # [1, 3, 100, 100]
+        #print(f"Length of x: {len(x)}")
+        #print(x.dtype)
         y = self.network(x)
 
         return(y)
