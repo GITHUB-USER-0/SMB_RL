@@ -3,9 +3,9 @@ title: "Analysis of a first long training"
 author: "Daniel Stornetta (dss2q)"
 output: 
   pdf_document:
+    keep_tex: yes # https://stackoverflow.com/questions/39497696/rmarkdown-to-latex
     toc: true
 classoption: landscape
-
 ---
 
 
@@ -94,12 +94,15 @@ dat.failure = dat %>% filter(flag_get == FALSE)
 
 ggplot() +
   geom_point(data = dat.failure, aes(x = episode, y = cumulativeReward)) +
-  geom_point(data = dat.success, aes(x = episode, y = cumulativeReward), color = "green", size = 2.5) +
+  geom_point(data = dat.success, aes(x = episode, y = cumulativeReward), color = "green", size = 3) +
   labs(x = "Episode",
        y = "Cumulative Reward (a.u.)",
        title = "Per-episode rewards in Super Mario Bros (1985)",
+       subtitle = "Prior round, flawed code",
        caption = paste0("Enlarged green observation reflects the only successfully completed level.",
                         "\nN=", episodeCount))
+
+ggsave("./training_round_dss2q_code.png", dpi = 300, width = 5, height = 4.5)
 ```
 \newpage
 The view of the results when ignoring some of the larger outliers suggests no significant increase in performance over time.
@@ -134,12 +137,14 @@ dat.puzzle = dat %>% filter(course %in% c("4-4", "7-4", "8-4"))
 ggplot() +
   geom_boxplot(data = dat.nonPuzzle, aes(x = course, y = cumulativeReward)) +
   geom_boxplot(data = dat.puzzle, aes(x = course, y = cumulativeReward), color = "orange") +
-  labs(x = "Episode",
-       y = "Cumulative Reward (a.u.)",
+  labs(x = "Course",
+       y = "Cumulative Reward per episode (a.u.)",
        title = "Rewards per course in Super Mario Bros (1985)",
-       subtitle = "",
+       subtitle = "Prior round, flawed code",
        caption = paste0("Episodes with puzzle designs highlighted in orange")) +
   theme(axis.text.x = element_text(angle = 90))
+
+ggsave("./per course rewards.png", dpi = 300, width = 7, height = 5)
   
 ```
 \newpage
