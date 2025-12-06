@@ -1,0 +1,165 @@
+---
+title: "A look at a long training session"
+author: 'dss2q'
+output:
+  pdf_document: default
+date: "2025-11-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading
+
+## Libraries
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+## Data
+
+```{r}
+dat.raw = read_csv('./log.csv') %>%
+  rename(remaining_time = `time...4`) %>%
+  rename(computetime = `time...10`)
+
+# as by world captures from:
+# https://www.vgmaps.com/Atlas/NES/SuperMarioBros-World
+course_sizes = read_csv('./getting_world_sizes/sizes.csv')
+
+# manually copied from https://www.mariowiki.com/World_1-1_(Super_Mario_Bros.) 
+# and subsequent pages
+course_durations = read_csv('./course_durations.csv')
+
+dat = dat.raw %>%
+  left_join(course_sizes) %>%
+  left_join(course_durations) %>%
+  mutate(remaining_time_fraction = remaining_time / course_duration_seconds)
+
+dat %>%
+  select(remaining_time_fraction) %>% arrange(desc(remaining_time_fraction))
+
+```
+
+No episode was able to complete the course.
+
+```{r}
+dat %>%
+  filter(flag_get == TRUE)
+```
+
+An overview of performance still shows positive signs:
+
+* episode rewards increase over the beginning (wholly random sampling) as epsilon decreases.
+* x-position also increases.
+* time remaining remains relatively flat. Different levels have different runtimes, so it would be best to normalize relative to the per-course starttime. (TODO)
+
+```{r message=FALSE, warning=FALSE}
+
+maxscaling = dat %>% summarize(mean_reward = mean(total_reward)) %>% pull() * 2
+
+dat %>%
+  left_join(course_durations)
+
+dat.summary = dat %>%
+  mutate(epsilon = epsilon * maxscaling,
+         remaining_time_fraction = remaining_time_fraction * maxscaling) %>%
+  select(episode, total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction) %>%
+  pivot_longer(cols = c(total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction))
+
+
+dat.summary %>%
+  ggplot(aes(x = episode, y = value, color = name)) +
+  geom_hline(yintercept = maxscaling, linetype = "dashed", color = "gray") +
+  geom_smooth() +
+  labs(caption = paste0("Epsilon has been rescaled for viewing and",
+  "and is not scaled to the y-axis [1.0 -> 0.005]\n",
+  "Likewise, remaining_time_fraction is scaled from [1, 0]"),
+       title = "Performance of revised code",
+       subtitle = "No frame combining, no target network separation")
+
+ggsave("./alternative_approach.png", dpi = 300, width = 10, height = 6)
+
+# dat %>%
+#   ggplot(aes(x = episode, y = epsilon)) +
+#   geom_line()
+
+cat(getwd())
+```
+
+```{r}
+dat %>%
+  ggplot(aes(x = episode, y = total_reward)) +
+  geom_point() +
+  #gghighlight::gghighlight(course == '4-4') +
+  geom_smooth()
+```
+
+
+```{r}
+dat %>%
+  group_by(course) %>%
+  ggplot(aes(x = course, y = total_reward)) +
+  geom_boxplot()
+```
+\newpage
+
+```{r}
+dat %>%
+  filter(episode %% 250 == 0)
+```
+
+\newpage
+
+```{r}
+dat %>%
+  filter(course == '4-4') %>%
+  ggplot(aes(x = x_pos, y = total_reward, color = remaining_time_fraction)) +
+  geom_point()
+```
+
+
+```{r}
+dat %>%
+  ggplot(aes(x = x_pos, y = total_reward, color = remaining_time_fraction)) +
+  geom_point()
+```
+
+\newpage
+
+A view of the relative performance of the DQN Agent across 5k training episodes.
+
+The approximate end of the level (by x-position) is indicated by the dashed red line.
+
+Note how none of these episodes were able to achieve this.
+
+Course 7-4 was excluded from training for this out of concern from degenerate outcomes as established in a prior round.
+
+```{r, fig.width = 8, height = 10}
+dat %>%
+  bind_rows(tibble(course = "7-4")) %>%
+    ggplot() +
+    geom_vline(aes(xintercept = width), linetype = 'dashed', color = 'red', alpha = 0.75) + 
+    geom_point(aes(x = x_pos, y = total_reward, color = episode), alpha = 0.4) +
+    facet_wrap( ~ course, ncol = 4) +
+  labs(title = "Progress relative to approximate end of level",
+       subtitle = "ChatGPT revised code, \nno target network, no frame stacking, \ncomplex movement set (actionspace)",
+       caption = paste0("NB., level sizes are approximate (likely overestimates) as per separate image captures.\n",
+                        "See https://www.vgmaps.com/Atlas/NES/index.htm#SuperMarioBros\n",
+                        "for more details.\n",
+                        "Course 7-4 excluded from training."),
+       x = "X-position\n(RAM value from emulator)",
+       y = "Episode reward")
+
+ggsave('chatgpt_version_performance_relative_to_level_completion.png', 
+       dpi = 300, height = 8.5, width = 11)
+
+ggsave('chatgpt_version_performance_relative_to_level_completion.pdf', 
+       dpi = 300, height = 8.5, width = 11)
+
+ggsave('chatgpt_version_performance_relative_to_level_completion.svg',
+       height = 12, width = 12)
+
+```
+

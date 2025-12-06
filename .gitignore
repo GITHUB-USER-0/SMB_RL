@@ -207,7 +207,12 @@ marimo/_lsp/
 __marimo__/
 savedModels/bar5005.pth
 savedModels/foo5004.pth
-*.png
 scratch.ipynb
 results/log.txt
 results/perEpisodeRewards.csv
+
+# do not include downloaded maps of the world
+/commentary/chatgpt_revision_of_implementation/getting_world_sizes/*.png
+
+# ignore saved png statesequences
+/stateSequences/**/*.png
