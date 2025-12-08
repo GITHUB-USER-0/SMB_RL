@@ -9,15 +9,14 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.input_shape = input_shape
         c, h, w = input_shape
-        
+
+        # was oversimplifying the system
         self.featureExtractor = nn.Sequential(
-            nn.Conv2d(c, 16, kernel_size=4, stride=4),
+            nn.Conv2d(c, 32, kernel_size=8, stride=4),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size = 2),
-            nn.Conv2d(16, 32, kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size = 2),
-            nn.Conv2d(32, 32, kernel_size=3, stride=1),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
             nn.ReLU()
         )
 
@@ -58,14 +57,20 @@ class DQN(nn.Module):
         torch.save(self.state_dict(), filename)
 
     def __repr__(self):
+        
+        # calculate the shape of the output of the featureExtractor
+        # previously was over compressing through the pooling
+        with torch.no_grad():
+            dummy = torch.zeros(1, *self.input_shape)
+            feat = self.featureExtractor(dummy)
+            feat_shape = feat.shape  # (1, C, H, W)
+            C, H, W = feat_shape[1], feat_shape[2], feat_shape[3]
+
         s = ''
-        #style = "RGB" if self.RGB else "grayscale"
-        #s += f"Network is processing input images as {style}\n"
-        #s += f"Input width:  {self.width}\n"
-        #s += f"Input height: {self.height}\n"
         s += f"Input shape: {self.input_shape}\n"
         s += f"First FC layer number of nodes: {self.n_flat}\n"
+        s += f"Feature extractor output: (channels={C}, height={H}, width={W})\n"
+        s += f"Flattened size: {self.n_flat}\n"       
         s += str(self.network)
-        
-        
+
         return( s )
