@@ -117,7 +117,7 @@ def preprocessFrame(frame,
         # normalize -- necessary?
         frame = frame / 255.0
         
-        return(frame)
+    return(frame)
 
 def tensorify(frame, method = 'fast'):
     """ Convert from the numpy array into a happy tensor.
