@@ -144,8 +144,8 @@ ggplot() +
        caption = paste0("Episodes with puzzle designs highlighted in orange")) +
   theme(axis.text.x = element_text(angle = 90))
 
-ggsave("./per course rewards.png", dpi = 300, width = 7, height = 5)
-  
+ggsave("./per_course_rewards_puzzle_highlight.png", dpi = 300, width = 7.5, height = 3)
+
 ```
 \newpage
 
