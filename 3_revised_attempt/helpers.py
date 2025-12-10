@@ -94,8 +94,10 @@ def preprocessFrame(frame,
     # generative AI input
     if method == "torch":
         frame = torch.from_numpy(frame).float() / 255.0
-        frame = frame.permute(2,0,1)
-        frame = F.interpolate(frame.unsqueeze(0), size= (ADJ_FRAME_WIDTH, ADJ_FRAME_HEIGHT), mode='bilinear')
+        frame = F.interpolate(
+            frame.permute(2,0,1).unsqueeze(0), size=(ADJ_FRAME_HEIGHT,ADJ_FRAME_WIDTH)
+        )
+        frame = frame.squeeze(0).permute(1,2,0).numpy()
 
     # human-generated
     elif method == "PIL":
