@@ -254,7 +254,7 @@ def saveDiagnosticImage(folder,
         backgroundColor = (255, 255, 255)
         textColor = (0,   0,   0  )
 
-    if diagnostics:
+    if annotations:
         ## the following line fails in TensorFlow environment
         #font = ImageFont.truetype("arial.ttf", size = 20)
         text_annotation = ""
@@ -268,4 +268,4 @@ def saveDiagnosticImage(folder,
     # use of padding in filename is helpful for passing 
     # in to Kdenlive as an Image Sequence for video review
     # in quick testing, .png files were smaller than .jpeg
-    image.save(f"./{folder}/{step:0>7}.png")
+    image.save(f"{folder}/{step:0>7}.png")
