@@ -209,7 +209,15 @@ def initializeEnvironment(rom = 'v0',
 
     return( (env, actionSpace_init) )
 
-def saveDiagnosticImage(folder, frame, step, action, x_pos, y_pos, rectangle):
+def saveDiagnosticImage(folder, 
+                        frame,
+                        annotations,
+                        step = None, 
+                        action = None, 
+                        x_pos = None, 
+                        y_pos = None, 
+                        rectangle = None,
+                       ):
     """ Save a snapshot with additional text info burned in.
     
     Inputs:
@@ -234,14 +242,8 @@ def saveDiagnosticImage(folder, frame, step, action, x_pos, y_pos, rectangle):
     # Ensure dtype is uint8
     frame = np.clip(frame, 0, 255).astype(np.uint8)
 
-    image = Image.fromarray(frame)
-    
+    image = Image.fromarray(frame)    
     draw = ImageDraw.Draw(image)
-    ## fails in TensorFlow environment
-    #font = ImageFont.truetype("arial.ttf", size = 20)
-    text_annotation = ""
-    text_annotation += str(f"step: {step:0>7}\naction: {action}\n")
-    text_annotation += str(f"x: {x_pos:0>3}, y: {y_pos:0>3}\n")
 
     # see: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
     if image.mode == "L": # grayscale image
@@ -252,9 +254,16 @@ def saveDiagnosticImage(folder, frame, step, action, x_pos, y_pos, rectangle):
         backgroundColor = (255, 255, 255)
         textColor = (0,   0,   0  )
 
-    #              x0, y0, x1, y1
-    draw.rectangle(rectangle,          fill = backgroundColor)
-    draw.text((0, 0), text_annotation, fill = textColor)
+    if diagnostics:
+        ## the following line fails in TensorFlow environment
+        #font = ImageFont.truetype("arial.ttf", size = 20)
+        text_annotation = ""
+        text_annotation += str(f"step: {step:0>7}\naction: {action}\n")
+        text_annotation += str(f"x: {x_pos:0>3}, y: {y_pos:0>3}\n")        
+    
+        #              x0, y0, x1, y1
+        draw.rectangle(rectangle,          fill = backgroundColor)
+        draw.text((0, 0), text_annotation, fill = textColor)
  
     # use of padding in filename is helpful for passing 
     # in to Kdenlive as an Image Sequence for video review
