@@ -215,4 +215,5 @@ results/perEpisodeRewards.csv
 /commentary/chatgpt_revision_of_implementation/getting_world_sizes/*.png
 
 # ignore saved png statesequences
-/stateSequences/**/*.png
+**/stateSequences/**/*.png
+**/savedSequences/**/*.png
