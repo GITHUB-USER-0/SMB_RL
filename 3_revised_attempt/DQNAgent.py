@@ -35,49 +35,117 @@ from collections import deque
 class DQNAgent():
 
     def __init__(self, 
-                 Q,
-                 replayBuffer,                                  
-                 BATCH_SIZE = 32,
-                 GAMMA = 0.99,
-                 randomLevel = True, 
+                 device = 'cpu',
                  rom = 'v3',
                  stagesList = ['1-1'],
-                 buttonList = [['NOOP']],
+                 excludeList = None,
+                 buttonList = [['right']],
+                 episode = 0,
+                 bufferCapacity = 5_000,                 
+                 BATCH_SIZE = 32,
+                 GAMMA = 0.99,
+                 lr = 1e-4,
+                 skipFrames = 4,
+                 saveImageFrequency = 250,
+                 randomLevel = True, 
+
+                 note = None, # additional note for json config
                  debug = True,
                 ):
 
-        self.Q = Q
-        self.D = replayBuffer        
-        self.BATCH_SIZE = BATCH_SIZE
-        self.GAMMA = GAMMA
+        self.config = dict(
+            #device=device,
+            rom=rom,
+            stagesList=stagesList,
+            excludeList = excludeList,
+            buttonList=buttonList,
+            randomLevel=randomLevel,
+            bufferCapacity=bufferCapacity,
+            BATCH_SIZE=BATCH_SIZE,
+            GAMMA=GAMMA,
+            lr=lr,
+            skipFrames=skipFrames,
+            saveImageFrequency=saveImageFrequency,
+            startingEpisode=episode,
+            note = note
+        )
 
-        self.optimizer = torch.optim.Adam(self.Q.parameters(), lr = 1e-4)
-        
-        # environment initialization
+
+
+        #self.D = replayBuffer  
+        self.device = device
+        self.episode = episode
+        self.BATCH_SIZE = BATCH_SIZE
+        self.minBufferSize = 5 * self.BATCH_SIZE
+        self.GAMMA = GAMMA       
         self.randomLevel = randomLevel
-        self.rom = 'v0'
+        self.rom = rom
+        self.skipFrames = skipFrames
+        self.saveImageFrequency = saveImageFrequency
         self.buttonList = buttonList # name is descriptive and intentional, this doesn't become an actionSpace until it comes out from gymnasium
+        self.stagesList = stagesList
+        
+
 
         # constants
         self.FRAME_HEIGHT = 240
         self.FRAME_WIDTH = 256
         self.VTRIM = 36
-        self.HTRIM = 36 # trim pixels off the left
+        self.HTRIM = 36       # trim pixels off the left
         self.HTRIM_RIGHT = 16 # trim pixels off the right
         self.TRIM_FRAME_HEIGHT = self.FRAME_HEIGHT - self.VTRIM
         self.TRIM_FRAME_WIDTH  = self.FRAME_WIDTH  - self.HTRIM - self.HTRIM_RIGHT
         self.ADJ_FRAME_HEIGHT = 100 # downscaled from trimmed
         self.ADJ_FRAME_WIDTH = 100  # 
 
+        # environment initialization
+        print(f"Initializing gymnasium environment ({rom})")
+        self.env, self.actionSpace = helpers.initializeEnvironment(stagesList = self.stagesList, 
+                                                                   buttonList = self.buttonList,
+                                                                   rom = self.rom)
+      
+        # set up Q and D (Q network and replay buffer) 
+        
+        self.observationShape = (3 * self.skipFrames, self.ADJ_FRAME_HEIGHT, self.ADJ_FRAME_WIDTH)
+        print("Setting up Replay Buffer")
+        self.D = ReplayBuffer(bufferCapacity, self.observationShape) # device=device)
+        print("Setting up DQN")        
+        self.Q = DQN(self.observationShape, len(self.actionSpace)).to(self.device)
+        self.optimizer = torch.optim.Adam(self.Q.parameters(), lr = lr)
+        
+        # set up results folder on a per-agent basis, ie., per run
+        print("Setting up output folders...")
+        self.startTime = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+        self.resultsDir = f'./results/{self.startTime}/'
+        self.savedModelsDir = os.path.join(self.resultsDir, 'savedModels')
+        self.savedSequencesDir = os.path.join(self.resultsDir, 'savedSequences')
+        self.logfile = os.path.join(self.resultsDir, './log.csv')
+        os.mkdir(self.resultsDir)
+        os.mkdir(self.savedModelsDir)
+        os.mkdir(self.savedSequencesDir)
+        print(f"Saving outputs to : {self.resultsDir}")
+        
+        config_path = os.path.join(self.resultsDir, "config.json")
+        print(f"Saving configuration to: {config_path}")
+        with open(config_path, "w") as f:
+            json.dump(self.config, f, indent=4)
 
-        self.stagesList = stagesList
-        self.env, self.actionSpace = helpers.initializeEnvironment(stagesList = self.stagesList, buttonList = self.buttonList, rom = self.rom)
+        # per-episode rewards and other information
+        self.logPath = os.path.join(self.resultsDir, "log.csv")
+        print(f"Saving log to: {self.logPath}")
 
+        with open(self.logPath, "w") as f:
+            header = "episode,total_reward,x_pos,time,flag_get,loss,epsilon,steps,course,time\n"
+            f.write(header)
+
+    
     def __repr__(self):
 
         s = ''
         s += f"{self.stagesList = }\n"
         s += f"{self.GAMMA = }\n"
+        s += f"{self.BATCH_SIZE = }\n"
+        s += f"{self.episode = }\n"
 
         return(s)
         
@@ -115,9 +183,6 @@ class DQNAgent():
     def runEpisode(self,
                    seed = None,
                    saveImage = False,
-                   saveImageFrequency = 30, # steps between a saved image, set to 1 for every frame
-                   printStatus = False,
-                   printFrequency = 1_000, # steps between printing the status
                    debug = False,
                    epoch = None,
                   ):
@@ -129,24 +194,17 @@ class DQNAgent():
         actions = np.empty(maxEpisodeLength, dtype = int)
         actions.fill(-1)
         
-        # set up one folder for one episode
+        # set up separate folders for raw and preprocessed images
         if saveImage:
-            timeFolder = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-            print(f"Saving images to : ./stateSequences/{timeFolder}")
-            rawDir = f'./stateSequences/{timeFolder}/raw'
-            preproDir = f'./stateSequences/{timeFolder}/preprocessed'
-            os.mkdir(f'./stateSequences/{timeFolder}')
-            os.mkdir(rawDir)
-            os.mkdir(preproDir)    
         
         state, info = self.env.reset(seed = seed) if seed else self.env.reset()
         if state is None:
             print("state is none!?")
+            rawDir = f'{self.savedSequencesDir}/raw/{self.episode}'
+            preproDir = f'{self.savedSequencesDir}/preprocessed/{self.episode}'
+            os.makedirs(rawDir, exist_ok = True)
+            os.makedirs(preproDir, exist_ok = True)
         phi = helpers.preprocessFrame(state)
-        if phi is None:
-            print("phi is none!?")
-        phiT = helpers.tensorify(phi)
-        if debug: print(f"{phiT.shape = } --- should be [1, {self.ADJ_FRAME_WIDTH}, {self.ADJ_FRAME_HEIGHT}]")
         
         step = -1
         
@@ -184,82 +242,38 @@ class DQNAgent():
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-      
-            if terminated or truncated:
-                finalUpdate = f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}"
-                if debug:
-                    print(f"{terminated=}\n{truncated=}")
-                    print(f"{info=}")
-    
-                # print terminal status
-                if printStatus:
-                    with open('./results/log.txt', 'a') as o:
-                        o.write(f"{finalUpdate}\n")
-                breaqk
-                
-            if saveImage:
-                # print(state.shape)
-                # print(phi.shape)
                 
                 # imgState = state.squeeze(0)
                 # imgPhi = phi.squeeze(0)
                 
-                if step % saveImageFrequency == 0:
-                    rawRectangle = [0, 0, 70, 50]
-                    preproRectangle = [0, 0, 70, 50]
-                    helpers.saveDiagnosticImage(rawDir, state, step, action_text, info['x_pos'], info['y_pos'], rawRectangle)
-                    helpers.saveDiagnosticImage(preproDir, phi * 255.0, step, action_text, info['x_pos'], info['y_pos'], preproRectangle)
     
-            # diagnostic info printing
-            # print periodically, and as mario is timing out
-            if printStatus and (step % printFrequency == 0 or step == 0):
-                update = f"{step=:0>7}, {cumulativeReward=}, {loss = }, {info['coins']=}, {info['time']=}\n"
-                with open('./results/log.txt', 'a') as o:
-                    o.write(update)
-                #print(update)
-    
-        #pd.DataFrame({'actions' : actions}).to_csv(f'./stateSequences/{timeFolder}/actions.csv')
-        #with open(f'./stateSequences/{timeFolder}/setup.txt/') as f:
-        #    f.write(f"{cumulativeRewards = }")
         result = {}
+        result['step'] = step
+        result['loss'] = 0 # loss
         result['cumulativeReward'] = cumulativeReward
-        #result['actions'] = actions # fixed length
         result['info'] = info
-        # variable length to just the last action taken
-        #lastActionIndex = np.argmax(actions == -1)
-        #result['actualActions'] = actions[0: lastActionIndex]
         
         return(result)
     
     
     def runEpisodes(self, numEpisodes):
-        resultFolder = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-        resultFolder = f"./savedModels/{resultFolder}/"
-        print(f"Saving models  to : {resultFolder}")
-        os.mkdir(resultFolder)
     
-        results = []
-    
-        #emitConfig()
-    
-        with open('./results/perEpisodeRewards.csv', 'a', newline = '') as CSV_outfile:
-            CSV_writer = csv.writer(CSV_outfile, delimiter = ',', quotechar = '|', quoting = csv.QUOTE_MINIMAL)
-            CSV_writer.writerow(['episode', 'cumulativeReward', 'course', 'flag_get'])
             
-            for i in range(numEpisodes):
-                if i % 50 == 0 or i == 0:
-                    saveImage, printStatus = True, True
-                    with open('./results/log.txt', 'a') as o:
-                        update = f"\n---\nEpisode: {i}\n"
-                        o.write(update)   
-                else:
-                    saveImage, printStatus = False, False
-                result = self.runEpisode(printStatus = printStatus, saveImage = saveImage)
-                results.append(result)
-                ri = result['info']
-                course = f"{ri['world']}-{ri['stage']}"
-                CSV_writer.writerow([i, result['cumulativeReward'], course, ri['flag_get']])
-                if i % 1_000 == 0 or i == 0:
-                    self.Q.saveModel(f"{resultFolder}{i}.pth")
-                
-        return(results)
+            # Extract fields
+            total_reward = result["cumulativeReward"]
+            loss = result["loss"]
+            course = f"{result['info']['world']}-{result['info']['stage']}"
+            flag_get = f"{result['info']['flag_get']}"
+            x_pos = f"{result['info']['x_pos']}"
+            game_time = f"{result['info']['time']}"
+            steps = result['step']
+            time = datetime.datetime.now()
+
+            # write results to CSV
+            with open(self.logPath, "a") as f:
+                f.write(f"{self.episode},{total_reward},{x_pos},{game_time},{flag_get},{loss},{self.epsilon},{steps},{course},{time}\n")        
+
+            if i % 1_000 == 0 or i == 0:
+                modelfp = os.path.join(self.savedModelsDir, f"{i}.pth")
+                self.Q.saveModel(modelfp)
+        return()
