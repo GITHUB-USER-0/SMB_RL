@@ -218,6 +218,7 @@ def saveDiagnosticImage(folder,
                         action = None, 
                         x_pos = None, 
                         y_pos = None, 
+                        epsilonFlag = None,
                         rectangle = None,
                        ):
     """ Save a snapshot with additional text info burned in.
@@ -260,7 +261,8 @@ def saveDiagnosticImage(folder,
         ## the following line fails in TensorFlow environment
         #font = ImageFont.truetype("arial.ttf", size = 20)
         text_annotation = ""
-        text_annotation += str(f"step: {step:0>7}\naction: {action}\n")
+        text_annotation += str(f"step: {step:0>7}\naction: {action}")
+        text_annotation += "epsilon\n" if epsilonFlag else "\n"         
         text_annotation += str(f"x: {x_pos:0>3}, y: {y_pos:0>3}\n")        
     
         #              x0, y0, x1, y1
