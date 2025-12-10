@@ -2,8 +2,11 @@
 import pandas as pd
 import numpy as np
 
-# logging
-import csv
+# saving outputs
+import os       # making folders
+import datetime # specific run
+import csv      # results file
+import json     # configuration
 
 # environment
 import gym_super_mario_bros 
@@ -11,28 +14,23 @@ import nes_py
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 
-# saving outputs
-# from time import monotonic  
-import os
-#from pathlib import Path # https://stackoverflow.com/questions/273192/how-do-i-create-a-directory-and-any-missing-parent-directories
-import datetime
-import matplotlib.pyplot as plt
-
+# epsilon, action selection
 from random import randint, random
 
-import sys #argument handling
-
-#from collections import deque
+# neural networks
 import torch
 import torch.optim as optim
-#import torchvision # grayscale
+
 
 import helpers
-import DQN
-from replay_buffer import ReplayBuffer
 from DQN import DQN
-from itertools import combinations # combinations for a complete actionSpace
+from replay_buffer import ReplayBuffer
 
+# combinations for a complete actionSpace
+from itertools import combinations
+
+# deque for stacking of frames
+from collections import deque
 
 class DQNAgent():
 
