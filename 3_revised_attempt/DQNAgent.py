@@ -273,21 +273,26 @@ class DQNAgent():
             # set next to be current
             phiT = phiPrimeT
     
-            train_frequency = 4 # train every 'x' frames
-            if step % train_frequency == 0:
-                # sample random minibatch of transitions (φ_j, a_j, r_j, φ_{j+1}) from D          
+            train_frequency = self.skipFrames # train every 'x' frames
+            if step % train_frequency == 0 and self.D.index > self.minBufferSize:
+                
+                # sample random minibatch of transitions (φ_j, a_j, r_j, φ_{j+1}) from D  
                 minibatch = self.D.sample(self.BATCH_SIZE)
+                
                 # y = r_j + γ max_{a′} Q(φ_{j+1}, a′; θ) for non-terminal φ_{j+1} 
                 # for the moment ignoring the terminal state
                 q_values, y = self.compute_targets(minibatch)
+                
                 loss = torch.nn.functional.mse_loss(q_values, y)
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+            # avoid training on a buffer that is not adequately full
+            else:
+                loss = None
                 
-                # imgState = state.squeeze(0)
-                # imgPhi = phi.squeeze(0)
-                
+            if terminated or truncated:
+                break
     
         result = {}
         result['step'] = step
