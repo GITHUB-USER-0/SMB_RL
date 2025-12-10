@@ -135,7 +135,7 @@ class DQNAgent():
         print(f"Saving log to: {self.logPath}")
 
         with open(self.logPath, "w") as f:
-            header = "episode,total_reward,x_pos,time,flag_get,loss,epsilon,steps,course,time\n"
+            header = "episode,total_reward,x_pos,time,flag_get,loss,epsilon,steps,truncated,stuck,course,time\n"
             f.write(header)
 
     
@@ -205,10 +205,7 @@ class DQNAgent():
 
         # reset gymnasium environment
         state, info = self.env.reset(seed = seed) if seed else self.env.reset()  
-        stuckDeque.append(info['x_pos'])
-        if len(stuckDeque) == stuckDeque.maxlen:
-            if np.all(stuckDeque):
-                stuck = True
+
 
         # set initial preprocessed frames
         phi = helpers.preprocessFrame(state)
@@ -237,15 +234,24 @@ class DQNAgent():
             # reward accumulates across the repeated frames
             stackedReward = 0
 
+            if len(stuckDeque) == stuckDeque.maxlen:
+                if len(np.unique(stuckDeque)) == 1:
+                    stuck = True
+            
+
             
             for _ in range(ACTION_REPEAT):
                 step += 1            
 
                 state, reward, terminated, truncated, info = self.env.step(action)
-                stackedReward += reward
-                if stuck:
-                    reward -= 2
 
+                stuckDeque.append(info['x_pos'])
+                if stuck:
+                    reward -= 15
+                    truncated = True
+                
+                stackedReward += reward
+                
                 phiPrime = helpers.preprocessFrame(state)
                 phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
                 
@@ -299,6 +305,8 @@ class DQNAgent():
                 break
     
         result = {}
+        result['stuck'] = stuck
+        result['truncated'] = truncated
         result['step'] = step
         result['loss'] = 0 # loss
         result['cumulativeReward'] = cumulativeReward
@@ -337,11 +345,13 @@ class DQNAgent():
             x_pos = f"{result['info']['x_pos']}"
             game_time = f"{result['info']['time']}"
             steps = result['step']
+            truncated = result['truncated']
+            stuck = result['stuck']
             time = datetime.datetime.now()
 
             # write results to CSV
             with open(self.logPath, "a") as f:
-                f.write(f"{self.episode},{total_reward},{x_pos},{game_time},{flag_get},{loss},{self.epsilon},{steps},{course},{time}\n")        
+                f.write(f"{self.episode},{total_reward},{x_pos},{game_time},{flag_get},{loss},{self.epsilon},{steps},{truncated},{stuck},{course},{time}\n")        
 
             if i % 1_000 == 0 or i == 0:
                 modelfp = os.path.join(self.savedModelsDir, f"{i}.pth")
