@@ -87,7 +87,7 @@ class DQNAgent():
         
 
 
-        # constants
+        # constants related to preprocessing
         self.FRAME_HEIGHT = 240
         self.FRAME_WIDTH = 256
         self.VTRIM = 36
@@ -195,10 +195,6 @@ class DQNAgent():
         
         # set up separate folders for raw and preprocessed images
         if saveImage:
-        
-        state, info = self.env.reset(seed = seed) if seed else self.env.reset()
-        if state is None:
-            print("state is none!?")
             rawDir = f'{self.savedSequencesDir}/raw/{self.episode}'
             preproDir = f'{self.savedSequencesDir}/preprocessed/{self.episode}'
             os.makedirs(rawDir, exist_ok = True)
