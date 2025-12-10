@@ -191,6 +191,11 @@ class DQNAgent():
         cumulativeReward = 0
         loss = None
         
+        # a deque to track being stuck in the same state
+        stuckDeque = deque(maxlen = 200)
+        stuck = False
+        
+        
         # set up separate folders for raw and preprocessed images
         if saveImage:
             rawDir = f'{self.savedSequencesDir}/raw/{self.episode}'
@@ -200,6 +205,10 @@ class DQNAgent():
 
         # reset gymnasium environment
         state, info = self.env.reset(seed = seed) if seed else self.env.reset()  
+        stuckDeque.append(info['x_pos'])
+        if len(stuckDeque) == stuckDeque.maxlen:
+            if np.all(stuckDeque):
+                stuck = True
 
         # set initial preprocessed frames
         phi = helpers.preprocessFrame(state)
@@ -234,6 +243,8 @@ class DQNAgent():
 
                 state, reward, terminated, truncated, info = self.env.step(action)
                 stackedReward += reward
+                if stuck:
+                    reward -= 2
 
                 phiPrime = helpers.preprocessFrame(state)
                 phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
