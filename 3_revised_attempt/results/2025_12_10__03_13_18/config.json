@@ -1,0 +1,37 @@
+{
+    "rom": "v0",
+    "stagesList": [
+        "1-1"
+    ],
+    "excludeList": null,
+    "buttonList": [
+        [
+            "NOOP"
+        ],
+        [
+            "right"
+        ],
+        [
+            "right",
+            "A"
+        ],
+        [
+            "right",
+            "B"
+        ],
+        [
+            "right",
+            "A",
+            "B"
+        ]
+    ],
+    "randomLevel": true,
+    "bufferCapacity": 10000,
+    "BATCH_SIZE": 32,
+    "GAMMA": 0.99,
+    "lr": 0.0001,
+    "skipFrames": 4,
+    "saveImageFrequency": 250,
+    "startingEpisode": 0,
+    "note": "comparison of movements under similar conditions"
+}
