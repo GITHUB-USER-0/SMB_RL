@@ -153,7 +153,7 @@ class DQNAgent():
         # select a_t = max_a Q∗(φ(st), a; θ)
         ##phi = phi.unsqueeze(0) # (c, w, h) -> (1, c, w, h)
     
-        if random() < 0.01:
+        if random() < self.epsilon:
             return(randint(0, len(self.buttonList) - 1)) #randint is inclusive of right   
         else:
             # get the argmax output from Q-network
@@ -257,7 +257,26 @@ class DQNAgent():
     
     
     def runEpisodes(self, numEpisodes):
+        """Loop over episodes, periodically save models and log rewards."""
+
+        self.epsilon_start = 1.0
+        self.epsilon_end = 0.1
+        self.decay_episodes = numEpisodes // 2
     
+        for i in range(numEpisodes):
+            if i < 10:
+                print(f"Starting episode {i}")
+            if i % self.saveImageFrequency == 0 or i == 0:
+                saveImage = True
+            else:
+                saveImage = False
+
+            # linear decay of epsilon generated with AI
+            self.epsilon = max(
+                    self.epsilon_end,
+                    self.epsilon_start - (self.episode / self.decay_episodes) * (self.epsilon_start - self.epsilon_end)
+                )
+            result = self.runEpisode(saveImage = saveImage)
             
             # Extract fields
             total_reward = result["cumulativeReward"]
