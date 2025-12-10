@@ -188,11 +188,10 @@ class DQNAgent():
                   ):
     
         """ Run a single episode until death. """
-    
+        self.episode += 1
+        ACTION_REPEAT = self.skipFrames # repeat actions across multiple frames
         cumulativeReward = 0
-        maxEpisodeLength = 20_000 # in testing, this seems to be reasonable, even accounts for degenerate puzzle course cases
-        actions = np.empty(maxEpisodeLength, dtype = int)
-        actions.fill(-1)
+        loss = None
         
         # set up separate folders for raw and preprocessed images
         if saveImage:
@@ -204,31 +203,74 @@ class DQNAgent():
             preproDir = f'{self.savedSequencesDir}/preprocessed/{self.episode}'
             os.makedirs(rawDir, exist_ok = True)
             os.makedirs(preproDir, exist_ok = True)
+
+        # reset gymnasium environment
+        state, info = self.env.reset(seed = seed) if seed else self.env.reset()  
+
+        # set initial preprocessed frames
         phi = helpers.preprocessFrame(state)
+        phiT = helpers.tensorify(phi).squeeze(0)  # shape (3,H,W)
         
+        # initialize a frame stack
+        frameStack = deque(maxlen=4)
+        for _ in range(4):
+            frameStack.append(phiT)
+
+        # implementation of stacked frames leveraged generative AI
+        def getStackedState():
+            """ concatenate multiple frames together (deque -> tensor) """
+            return torch.cat(list(frameStack), dim=0).unsqueeze(0)
+            
         step = -1
         
         while True:
-            step += 1
-    
-            # epsilon-greedy or otherwise select a_t = max_a Q^*(φ(st), a; θ) 
-            action = self.selectAction(phiT)
-            actions[step] = action
 
-            # TODO: remove
-            try:
-                action_text = self.actionSpace[action]
-            except IndexError:
-                print(action, self.actionSpace)
-    
-            state, reward, terminated, truncated, info = self.env.step(action)
-            phiPrime = helpers.preprocessFrame(state)
-            phiPrimeT = helpers.tensorify(phiPrime)
-    
+            phiStacked = getStackedState()
+            
+            # epsilon-greedy or otherwise select a_t = max_a Q^*(φ(st), a; θ) 
+            action = self.selectAction(phiStacked)
+            actionText = self.actionSpace[action]
+
+            # reward accumulates across the repeated frames
+            stackedReward = 0
+
+            
+            for _ in range(ACTION_REPEAT):
+                step += 1            
+
+                state, reward, terminated, truncated, info = self.env.step(action)
+                stackedReward += reward
+                cumulativeReward += reward
+
+                phiPrime = helpers.preprocessFrame(state)
+                phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
+                
+                frameStack.append(phiPrimeT)
+
+                # save only every other frame
+                if saveImage and step %2 == 0:
+                    rawRectangle = [0, 0, 70, 50]
+                    helpers.saveDiagnosticImage(rawDir, state, True, step, actionText, info['x_pos'], info['y_pos'], rawRectangle)
+                    phi_saving_image = helpers.preprocessFrame(state)
+                    helpers.saveDiagnosticImage(preproDir, phi_saving_image * 255.0, annotations = False, step = step)
+                # NB., earlier break does not exit main loop
+
+                if terminated or truncated:
+                    break
+
+            # 
+            phiPrimeStacked = getStackedState()
+
             # store new transition
-            self.D.storeTransition( (phiT, action, reward, phiPrimeT) )
+            self.D.storeTransition( 
+                (phiStacked.squeeze(0), 
+                 action,
+                 stackedReward,
+                 phiPrimeStacked.squeeze(0))
+            )
             cumulativeReward += reward
 
+            # set next to be current
             phiT = phiPrimeT
     
             train_frequency = 4 # train every 'x' frames
