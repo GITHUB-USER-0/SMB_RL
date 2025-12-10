@@ -97,6 +97,9 @@ class DQNAgent():
         self.TRIM_FRAME_WIDTH  = self.FRAME_WIDTH  - self.HTRIM - self.HTRIM_RIGHT
         self.ADJ_FRAME_HEIGHT = 100 # downscaled from trimmed
         self.ADJ_FRAME_WIDTH = 100  # 
+        
+        self.bestXPosition = -1
+
 
         # environment initialization
         print(f"Initializing gymnasium environment ({rom})")
@@ -222,6 +225,7 @@ class DQNAgent():
             return torch.cat(list(frameStack), dim=0).unsqueeze(0)
             
         step = -1
+        trace = [] # add a trace that keeps states in memory, then write it, if it is a new record
         
         while True:
 
@@ -256,13 +260,15 @@ class DQNAgent():
                 phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
                 
                 frameStack.append(phiPrimeT)
+                if step%2 == 0:
+                    # use of a copy frame, otherwise, one ends up with many copies of the same frame
+                    trace.append((state.copy(), True, step, actionText, info['x_pos'], info['y_pos'], epsilonFlag, rawRectangle))
 
-                # save only every other frame
-                if saveImage and step %2 == 0:
-                    rawRectangle = [0, 0, 70, 50]
-                    helpers.saveDiagnosticImage(rawDir, state, True, step, actionText, info['x_pos'], info['y_pos'], rawRectangle)
-                    phi_saving_image = helpers.preprocessFrame(state)
-                    helpers.saveDiagnosticImage(preproDir, phi_saving_image * 255.0, annotations = False, step = step)
+                    if saveImage:
+                        helpers.saveDiagnosticImage(rawDir, state, True, step, actionText, info['x_pos'], info['y_pos'], epsilonFlag, rawRectangle)
+                        phi_saving_image = helpers.preprocessFrame(state)
+                        helpers.saveDiagnosticImage(preproDir, phi_saving_image * 255.0, annotations = False, step = step)
+                
                 # NB., earlier break does not exit main loop
 
                 if terminated or truncated:
@@ -303,7 +309,15 @@ class DQNAgent():
                 
             if terminated or truncated:
                 break
-    
+
+        if info['x_pos'] > self.bestXPosition:
+            self.bestXPosition = info['x_pos']
+            bestDir = f'{self.savedSequencesDir}/best/{self.bestXPosition}_{self.episode}'
+            os.makedirs(bestDir, exist_ok = True)
+            for i, frameStateTuple in enumerate(trace):
+                helpers.saveDiagnosticImage(bestDir, *frameStateTuple)
+
+        
         result = {}
         result['stuck'] = stuck
         result['truncated'] = truncated
