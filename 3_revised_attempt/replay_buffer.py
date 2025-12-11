@@ -22,7 +22,8 @@ class ReplayBuffer():
         self.reward    = torch.zeros( (size), dtype = torch.int32 ) #likewise
         self.nextState = torch.zeros( (size, *shape) )
 
-        self.index = 0 # pointer to the **next** entry to be filled in
+        self.index = 0 # pointer to the **next** entry to be filled in, this wraps
+        self.count = 0 # the number of filled entry, this caps out at size
 
     def storeTransition(self, transition):
         """ Store a transition of state, action, reward, state' aka (phi, a, r, phi+1) """
@@ -34,6 +35,9 @@ class ReplayBuffer():
 
         # will loop through in a circular manner, First-In-First-Overwritten
         self.index = (self.index + 1) % self.size
+
+        # increment count, but never exceed size
+        self.count = min(self.count + 1, self.size)
 
         
     def sample(self, minibatches = 1):
@@ -47,18 +51,11 @@ class ReplayBuffer():
                 reward
                 next preprocessed frame """
 
-        # we could certainly use numpy or similar
-        # unclear if there is a torch specific option
-        # looking at torchrl source code for samplers suggests
-        # torch.randperm
-        ## see: https://github.com/pytorch/rl/blob/main/torchrl/data/replay_buffers/samplers.py
-        #
+        ## generative AI caught this problem
+        ## as we work with a pre-allocated tensor, the length is always at max
+        #currentSize = len(self.phi)
+        currentSize = self.count
 
-        # original source does not specify with or without replacement
-        # as is, this does not allow replacement
-        #indices = torch.randperm(self.size)[0 : minibatches]
-        # faster implementation suggested by generative AI
-        currentSize = len(self.phi)
         indices = torch.randint(0, currentSize, (minibatches, )) 
         
         result = (
