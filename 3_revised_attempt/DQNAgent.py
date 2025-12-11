@@ -165,7 +165,6 @@ class DQNAgent():
     def selectAction(self, phi):
         # select a_t = max_a Q∗(φ(st), a; θ)
         ##phi = phi.unsqueeze(0) # (c, w, h) -> (1, c, w, h)
-    
         if random() < self.epsilon:
             epsilonFlag = True
             return( (randint(0, len(self.buttonList) - 1), epsilonFlag) ) #randint is inclusive of right   
@@ -209,7 +208,7 @@ class DQNAgent():
         self.episode += 1
         ACTION_REPEAT = self.skipFrames # repeat actions across multiple frames
         cumulativeReward = 0
-        loss = None
+        last_loss = None
         # background rectangle for annotated frames
         #              x0, y0, x1, y1
         rawRectangle = [0, 0,  90, 60]
@@ -249,7 +248,6 @@ class DQNAgent():
         trace = [] # add a trace that keeps states in memory, then write it, if it is a new record
         
         while True:
-
             phiStacked = getStackedState()
             
             # epsilon-greedy or otherwise select a_t = max_a Q^*(φ(st), a; θ) 
@@ -262,24 +260,26 @@ class DQNAgent():
             if len(stuckDeque) == stuckDeque.maxlen:
                 if len(np.unique(stuckDeque)) == 1:
                     stuck = True
-            
 
+            stackedReward = 0
+            last_phiPrimeT = None
             
             for _ in range(ACTION_REPEAT):
-                step += 1            
-
+                step += 1
+            
                 state, reward, terminated, truncated, info = self.env.step(action)
-
+            
                 stuckDeque.append(info['x_pos'])
                 if stuck:
                     reward -= 15
                     truncated = True
-                
+            
                 stackedReward += reward
-                
+            
+                # Preprocess *every* frame, but do NOT append yet
                 phiPrime = helpers.preprocessFrame(state)
-                phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
-                
+                last_phiPrimeT = helpers.tensorify(phiPrime).squeeze(0)
+            
                 # trace + image saving (unchanged)
                 if step % 2 == 0:
                     trace.append(
@@ -298,8 +298,10 @@ class DQNAgent():
             
                 if terminated or truncated:
                     break
-
-            # 
+            
+            # After repeating the action, append ONLY the last observed frame
+            frameStack.append(last_phiPrimeT)
+            
             phiPrimeStacked = getStackedState()
 
             # store new transition
@@ -312,10 +314,10 @@ class DQNAgent():
             cumulativeReward += stackedReward
 
             # set next to be current
-            phiT = phiPrimeT
-    
-            train_frequency = self.skipFrames # train every 'x' frames
-            if step % train_frequency == 0 and self.D.index > self.minBufferSize:
+            phiT = last_phiPrimeT 
+
+            #train_frequency = self.skipFrames # train every 'x' frames
+            if self.D.count > self.minBufferSize:
                 
                 # sample random minibatch of transitions (φ_j, a_j, r_j, φ_{j+1}) from D  
                 minibatch = self.D.sample(self.BATCH_SIZE)
@@ -339,7 +341,7 @@ class DQNAgent():
 
             # avoid training on a buffer that is not adequately full
             else:
-                loss = None
+                pass
                 
             if terminated or truncated:
                 break
@@ -356,7 +358,7 @@ class DQNAgent():
         result['stuck'] = stuck
         result['truncated'] = truncated
         result['step'] = step
-        result['loss'] = 0 # loss
+        result['loss'] = last_loss
         result['cumulativeReward'] = cumulativeReward
         result['info'] = info
         
