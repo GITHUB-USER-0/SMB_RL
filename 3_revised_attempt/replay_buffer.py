@@ -19,7 +19,7 @@ class ReplayBuffer():
 
         self.phi       = torch.zeros( (size, *shape) )
         self.action    = torch.zeros( (size), dtype = torch.int32 ) #specify int, otherwise float
-        self.reward    = torch.zeros( (size), dtype = torch.int32 ) #likewise
+        self.reward    = torch.zeros( (size), dtype = torch.float32 ) # rewards are integers, but it appears recommended to use float as this will be used in the loss calculation
         self.nextState = torch.zeros( (size, *shape) )
 
         self.index = 0 # pointer to the **next** entry to be filled in, this wraps
