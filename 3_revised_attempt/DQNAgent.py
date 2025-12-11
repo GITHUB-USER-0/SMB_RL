@@ -114,6 +114,16 @@ class DQNAgent():
         self.D = ReplayBuffer(bufferCapacity, self.observationShape) # device=device)
         print("Setting up DQN")        
         self.Q = DQN(self.observationShape, len(self.actionSpace)).to(self.device)
+
+        # target networks--yay!
+        self.Q_target = DQN(self.observationShape, len(self.actionSpace)).to(self.device)
+        self.Q_target.load_state_dict(self.Q.state_dict())
+        self.Q_target.eval() # target network doesn't need to be 'trained', it gets updated
+        
+        # frequency of hard updates (typical Atari value: 10,000)
+        self.target_update_freq = 5000   
+        self.training_step_count = 0
+        
         self.optimizer = torch.optim.Adam(self.Q.parameters(), lr = lr)
         
         # set up results folder on a per-agent basis, ie., per run
@@ -173,10 +183,9 @@ class DQNAgent():
         # Current Q-values for chosen actions
         q_values = self.Q(phi_batch).gather(1, action_batch.unsqueeze(1)).squeeze(1)
     
-        # Next state Q-values
-        next_q_values = self.Q(next_state_batch)
-        max_next_q = next_q_values.max(dim=1)[0]
-    
+        with torch.no_grad():
+            next_q_values = self.Q_target(next_state_batch)
+            max_next_q = next_q_values.max(dim=1)[0]
         # Targets
         y = reward_batch + self.GAMMA * max_next_q
     
@@ -313,6 +322,15 @@ class DQNAgent():
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+                last_loss = loss.item()
+
+                ## Generative AI update
+                # Hard update of the target network
+                self.training_step_count += 1
+                if self.training_step_count % self.target_update_freq == 0:
+                    self.Q_target.load_state_dict(self.Q.state_dict())
+                    # print(f"[INFO] Updated target network at step {self.training_step_count}")
+
             # avoid training on a buffer that is not adequately full
             else:
                 loss = None
