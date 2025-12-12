@@ -1,0 +1,6 @@
+gym_super_mario_bros==8.0.0 # https://github.com/sajmon83/gymnasium-super-mario-bros
+nes_py==9.0.0 # https://github.com/sajmon83/nes-py
+numpy==1.25.2
+pandas==2.3.3
+Pillow==12.0.0
+torch==2.9.1
