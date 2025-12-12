@@ -1,0 +1,566 @@
+---
+title: "Analysis of training sessions of DQN on SMB"
+author: 'dss2q'
+output:
+  pdf_document: default
+date: "2025-12-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+# Loading
+
+## Libraries
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+# Analysis
+
+## 2025-11-24
+
+Load in data from an overnight run of the agent on 2025-11-24.
+
+This is from [https://github.com/GITHUB-USER-0/SMB_RL/tree/50c9b0ed68e16ba5045b846bdbb408ce94178a41](https://github.com/GITHUB-USER-0/SMB_RL/tree/50c9b0ed68e16ba5045b846bdbb408ce94178a41).
+
+Hyperparameters:
+
+* FRAME_WIDTH = 256
+* VTRIM = 36
+* HTRIM = 36
+* HTRIM_RIGHT = 16
+* TRIM_FRAME_HEIGHT = 204
+* TRIM_FRAME_WIDTH = 204
+* ADJ_FRAME_HEIGHT = 100
+* ADJ_FRAME_WIDTH = 100
+* BUFFER_SIZE = 1000
+* SEED = None
+* ROM = v0
+* BATCH_SIZE = 32
+* GAMMA = 0.99
+* LEARNING_RATE = 0.0001
+* ACTION_SPACE_IN_USE = [['right'], ['NOOP'], ['right', 'B'], ['right', 'A'], ['A'], ['down']]
+
+```{r}
+dat = read_csv('inputs/2025-11-24.csv')
+```
+
+Courses were randomly selected across the entire game.
+
+* episode : training episode
+* cumulativeReward : the reward at the end of the episode using the default reward function
+* course : the world-stage pairing, eg., "1-1" corresponds to world 1, stage 1, the first course of the game. (For additional details see `/documentation/on different SMB courses.ipynb`)
+
+```{r}
+dat %>% head()
+```
+
+A categorization of levels accessed from the [Mario Bros. Wiki](https://www.mariowiki.com/Super_Mario_Bros.) available under [CC BY-SA 3.0 license](https://creativecommons.org/licenses/by-sa/3.0/).
+
+I have added a subcategorization of "Puzzle" for three courses based on their inclusion of looping segments of the course that can repeat until the player runs out of time.
+
+```{r}
+courseMap = read_csv('inputs/level_categorization.csv') %>%
+  mutate(courseType = if_else(course %in% c("4-4", "7-4", "8-4"), paste0(courseType, ", Puzzle"), courseType))
+courseMap
+```
+
+
+\newpage
+### Overview of training outcomes
+
+Comments:
+
+* Outside of sparse high-reward events, it appears that overall rewards were relatively low and stable.
+* It appears that there was just one level that managed to reach the flag pole (terminal state for a level).
+* Occasional episodes had very high levels of reward. (*This will ultimately align with the hypothesis I had generated about puzzle levels, see 'documentation/on different SMB courses.ipynb'*).
+
+```{r, fig.width = 5, fig.height = 4}
+episodeCount = nrow(dat)
+
+dat.success = dat %>% filter(flag_get == TRUE)
+dat.failure = dat %>% filter(flag_get == FALSE)
+
+ggplot() +
+  geom_point(data = dat.failure, aes(x = episode, y = cumulativeReward)) +
+  geom_point(data = dat.success, aes(x = episode, y = cumulativeReward), color = "green", size = 3) +
+  labs(x = "Episode",
+       y = "Cumulative Reward (a.u.)",
+       title = "Per-episode rewards in Super Mario Bros (1985)",
+       subtitle = "Prior round, flawed code",
+       caption = paste0("Enlarged green observation reflects the only successfully completed level.",
+                        "\nN=", episodeCount))
+
+ggsave('outputs/training_round_dss2q_code.png', dpi = 300, width = 5, height = 4.5)
+```
+\newpage
+The view of the results when ignoring some of the larger outliers suggests no significant increase in performance over time.
+
+```{r, fig.width = 5, fig.height = 4}
+dat %>%
+  filter(cumulativeReward < 2500) %>%
+  mutate(episode_1000 =  floor(episode / 1000)) %>%
+  mutate(episode_1000 = factor(episode_1000)) %>%
+  ggplot(aes(x = episode_1000, y = cumulativeReward)) +
+  geom_boxplot() +
+  labs(x = "Episode (1,000s grouped)",
+       y = "Cumulative Reward (a.u.)",
+       title = "Rewards per 1,000 episodes in Super Mario Bros (1985)",
+       subtitle = "Rewards greater than 2,500 not inclusive",
+       caption = paste0("Enlarged green observation reflects the only successfully completed level.",
+                        "\nN=", episodeCount))
+```
+
+
+\newpage
+### Per-course behavior
+
+A look at per-course behavior provides insight to some of the largest outliers and provides evidence to support a hypothesis generated before testing.
+
+Namely, the reward structure could allow for degenerate reward signaling on 'puzzle levels' that allow for infinitely scrolling courses when the agent takes a looping path, see `/documentation/on different SMB courses.ipynb`.
+
+```{r, fig.width = 9.5, fig.height = 3.5}
+dat.nonPuzzle = dat %>% filter(!course %in% c("4-4", "7-4", "8-4"))
+dat.puzzle = dat %>% filter(course %in% c("4-4", "7-4", "8-4"))
+
+ggplot() +
+  geom_boxplot(data = dat.nonPuzzle, aes(x = course, y = cumulativeReward)) +
+  geom_boxplot(data = dat.puzzle, aes(x = course, y = cumulativeReward), color = "orange") +
+  labs(x = "Course",
+       y = "Cumulative Reward per episode (a.u.)",
+       title = "Rewards per course in Super Mario Bros (1985)",
+       subtitle = "Prior round, flawed code",
+       caption = paste0("Episodes with puzzle designs highlighted in orange")) +
+  theme(axis.text.x = element_text(angle = 90))
+
+ggsave("outputs/per_course_rewards_puzzle_highlight.png", dpi = 300, width = 7.5, height = 3)
+
+```
+\newpage
+
+```{r, fig.width = 7, fig.height = 4}
+dat %>%
+  left_join(courseMap) %>%
+  ggplot(aes(x = courseType, y = cumulativeReward, color = courseType)) +
+  geom_boxplot() +
+  #facet_wrap( ~ courseType, ncol = 2) +
+  #coord_cartesian(ylim = c(0, 2500)) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Course type",
+       y = "Cumulative Reward (a.u.)",
+       title = "Rewards by course type",
+       caption = paste0("NB., puzzle subcategory added by me, other categorizations as per the Mario Bros Wiki,",
+       "CC BY-SA 3.0.\nhttps://www.mariowiki.com/Super_Mario_Bros."))
+```
+\newpage
+### Periodic values from saved episodes.
+
+```{r}
+dat %>%
+  filter(episode %% 1000 == 0) %>%
+  knitr::kable()
+```
+
+\newpage
+### Summary table
+
+Summary table by course.
+
+```{r}
+summaryTable = dat %>%
+  group_by(course) %>%
+  summarize(mean_reward = mean(cumulativeReward),
+            sd_reward = sd(cumulativeReward),
+            count = n()) %>%
+  mutate(mean_reward = round(mean_reward, 2),
+         sd_reward = round(sd_reward, 2))
+
+summaryTable %>%
+  knitr::kable()
+```
+
+\newpage
+```{r, echo=FALSE, results='asis'}
+# https://stackoverflow.com/questions/34808612/how-make-2-column-layout-in-r-markdown-when-rendering-pdf
+cat("\\twocolumn")
+```
+### Commentary
+
+Based on a manual review of episodes traces (ie., reviewing saved image frames played together in a movie.)
+
+A manual review of episode 0 suggests that it rapidly is valuing the rightward movement.
+
+A manual review of episode 9,000 provides several observations:
+
+* This is a puzzle level, and the agent is indeed proceeding rightward on a wrong path, allowing it to continue to accumulate rewards.
+* The reward function uses the delta in x_position to calculate x_velocity. However, in stages that loop, there are sudden shifts in x_position, jumping from approximately 1,060 (highest observed 1,064) to a thousand less. Thus, this results in single reward steps of 1,000. This could be argued to be a bug of the environment, but also a suggestion that there should be greater reward stabilization/normalization to prevent learning too much from these blips. More simply, the removal of these levels in training may be appropriate.
+* * This is supported by how the source code looks at raw RAM values in the emulator.Source code: [https://github.com/sajmon83/gymnasium-super-mario-bros/blob/b8f89fbc2da0d495d87b2d6d1e2d56444df73a4b/gym_super_mario_bros/smb_env.py#L139](https://github.com/sajmon83/gymnasium-super-mario-bros/blob/b8f89fbc2da0d495d87b2d6d1e2d56444df73a4b/gym_super_mario_bros/smb_env.py#L139)
+
+        def _x_position(self):
+        """Return the current horizontal position."""
+        # add the current page 0x6d to the current x
+        return int(self.ram[0x6d]) * 0x100 + 
+               int(self.ram[0x86])
+
+* There is an additional element of state to the agent, where the previously selected actions limit the behavior of a future action. If the agent is 'holding down' the 'A' button to jump either by itself, or in combination with others, there is 1) a cooldown, and 2) a requirement that the button be released for it to be pressed again. This suggests that the combination of prior actions into a model could be valuable, not just a stacking of prior states. 
+  * Not that we are seeking to resolve this with dynamic programming, but this information suggests that the Markov assumption is violated **if** one is considering only the static frame as the state. If momentum values or prior input presses are part of the state then one could restore this property.
+  * Regardless of other potential fixes, this also suggests the importance of annealing the epsilon value over time.
+* The agent is predominantly holding down ['right', 'A'], which moves it right and jumps. However, by holding down the 'A' button, it is unable to jump unless it releases that button for one or more frames first. The use of an epsilon value of 0.01 appears to be responsible for the jumping observed in this particular episode. Thus, the successful dodging that we observe, may simply be a result of sampling the system many thousands of times and observing successful instances.
+
+### Additional comments on 7-4
+
+It is interesting to note that there are no instances of negative reward in the course 7-4. This, in spite of hazards being placed near the start of the level. One possible interpretation of this is that the value of the remaining time is counterbalancing the lack of x_position progress, as it seems implausible that the agent is not in fact dying in some instances. This suggests that for post-mortem analysis, one should have the x_position and y_position values stored as well, as they are helpful (notwithstanding the problems of looping x_position levels, which arguably might benefit from being removed.)
+
+It begs the question of whether a reward signal based on the x_position of the agent, relative to the end of the level might be more informative, albeit less generic. Moreover, that would require leaking information about the level from the model to the agent, something that it should not know from the environment.
+
+```{r, echo=FALSE, results='asis'}
+# https://stackoverflow.com/questions/34808612/how-make-2-column-layout-in-r-markdown-when-rendering-pdf
+cat("\\onecolumn")
+```
+
+```{r}
+dat %>%
+  filter(course == "7-4") %>%
+  filter(cumulativeReward < 0)
+```
+
+```{r}
+dat %>%
+  filter(course == "7-4") %>%
+  filter(cumulativeReward < 5000) %>%
+  ggplot(aes(x = episode, y = cumulativeReward)) +
+  geom_point() +
+  labs(x = "Episode",
+       y = "Cumulative Reward (a.u.)",
+       title = "Rewards in course 7-4",
+       subtitle = "Outliers/degenerate rewards removed") +
+  coord_cartesian(ylim = c(-100, 500))
+
+dat %>%
+  filter(course == "7-4") %>%
+  ggplot(aes(x = episode, y = cumulativeReward)) +
+  geom_point() +
+  labs(x = "Episode",
+       y = "Cumulative Reward (a.u.)",
+       title = "Rewards in course 7-4",
+       subtitle = "")  
+```
+
+
+### Performance on all levels
+
+Performance of the DQN network that succeeded at 1-1 when trained across all levels.
+
+```{r}
+dat.raw = read_csv('inputs/log_all_levels_no_exclusions.csv') %>%
+  rename(remaining_time = `time...4`) %>%
+  rename(computetime = `time...12`)
+
+# as by world captures from:
+# https://www.vgmaps.com/Atlas/NES/SuperMarioBros-World
+course_sizes = read_csv('inputs/sizes.csv')
+
+# manually copied from https://www.mariowiki.com/World_1-1_(Super_Mario_Bros.) 
+# and subsequent pages
+course_durations = read_csv('inputs/course_durations.csv')
+
+dat = dat.raw %>%
+  left_join(course_sizes) %>%
+  left_join(course_durations) %>%
+  mutate(remaining_time_fraction = remaining_time / course_duration_seconds)
+
+dat %>%
+  select(remaining_time_fraction) %>% arrange(desc(remaining_time_fraction))
+
+```
+
+No episode was able to complete the course.
+
+```{r}
+dat %>%
+  filter(flag_get == TRUE) %>%
+  select(episode, total_reward, x_pos, epsilon, course)
+```
+
+An overview of performance still shows positive signs:
+
+* episode rewards increase over the beginning (wholly random sampling) as epsilon decreases.
+* x-position also increases.
+* time remaining remains relatively flat. Different levels have different runtimes, so it would be best to normalize relative to the per-course starttime. (TODO)
+
+```{r message=FALSE, warning=FALSE}
+
+maxscaling = dat %>% summarize(mean_reward = mean(total_reward)) %>% pull() * 2
+
+dat %>%
+  left_join(course_durations)
+
+dat.summary = dat %>%
+  mutate(epsilon = epsilon * maxscaling,
+         remaining_time_fraction = remaining_time_fraction * maxscaling) %>%
+  select(episode, total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction) %>%
+  pivot_longer(cols = c(total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction))
+
+ggplot() +
+  geom_hline(yintercept = maxscaling, linetype = "dashed", color = "gray") +
+  geom_smooth(data = dat.summary %>% filter(!name %in% c("epsilon")), aes(x = episode, y = value, color = name)) +
+  geom_line(data = dat.summary %>% filter(name == "epsilon"), aes(x = episode, y = value), linetype = "dashed") +
+  labs(caption = paste0("Epsilon has been rescaled for viewing and",
+  "and is not scaled to the y-axis [1.0 -> 0.005]\n",
+  "Likewise, remaining_time_fraction is scaled from [1, 0]"),
+       title = "Performance of revised code",
+       subtitle = "")
+
+ggsave("outputs/alternative_approach.png", dpi = 300, width = 10, height = 6)
+
+# dat %>%
+#   ggplot(aes(x = episode, y = epsilon)) +
+#   geom_line()
+
+```
+
+```{r}
+dat %>%
+  ggplot(aes(x = episode, y = total_reward)) +
+  geom_point() +
+  #gghighlight::gghighlight(course == '4-4') +
+  geom_smooth()
+```
+
+
+```{r}
+dat %>%
+  group_by(course) %>%
+  ggplot(aes(x = course, y = total_reward)) +
+  geom_boxplot()
+```
+\newpage
+
+Traces that were recorded that may be of interest to manually review.
+
+```{r}
+dat %>%
+  filter(episode %% 250 == 0)
+```
+
+
+\newpage
+
+A view of the relative performance of the DQN Agent across 5k training episodes.
+
+The approximate end of the level (by x-position) is indicated by the dashed red line.
+
+Note how none of these episodes were able to achieve this.
+
+Course 7-4 was excluded from training for this out of concern from degenerate outcomes as established in a prior round.
+
+```{r, fig.width = 8, height = 10}
+dat %>%
+  #filter(!course %in% c('4-4', '7-4')) %>% # omit 7-4 due to degenerate results
+  #bind_rows(tibble(course = c('4-4', '7-4'))) %>%
+    ggplot() +
+    geom_vline(aes(xintercept = width), linetype = 'dashed', color = 'red', alpha = 0.75) + 
+    geom_point(aes(x = x_pos, y = total_reward, color = episode), alpha = 0.4) +
+    facet_wrap( ~ course, ncol = 4) +
+  labs(title = "Progress relative to approximate end of level",
+       subtitle = "Generative AI contributed meaningfully to code revisions, simple movement (actionspace)",
+       caption = paste0("NB., level sizes are approximate (likely overestimates) as per separate image captures.\n",
+                        "See https://www.vgmaps.com/Atlas/NES/index.htm#SuperMarioBros\n",
+                        "for more details.\n",
+                        "4-4 and 7-4 trained but omitted for clarity (degenerate high rewards)"),
+       x = "X-position\n(RAM value from emulator)",
+       y = "Episode reward")
+
+ggsave('outputs/revised_attempt_performance_relative_to_level_completion.png', 
+       dpi = 300, height = 8.5, width = 11)
+
+ggsave('outputs/revised_attempt_performance_relative_to_level_completion.pdf', 
+       dpi = 300, height = 8.5, width = 11)
+
+#ggsave('outputs/revised_attempt_performance_relative_to_level_completion.svg',
+#       height = 12, width = 12)
+
+```
+
+\newpage
+## 1-1 performant DQN
+
+Training results from a performant model on course 1-1.
+
+```{r}
+dat.11 = read_csv('inputs/log_performant1-1.csv') %>%
+  rename(remaining_time = `time...4`) %>%
+  rename(computetime = `time...12`)
+
+```
+
+```{r}
+dat.11 %>%
+  summarize(total_frames = cumsum(steps) / 4) %>%
+  filter(total_frames == max(total_frames))
+
+
+dat.11.temp = dat.11 %>%
+  mutate(epsilon = epsilon * 3000) %>%
+  pivot_longer(cols = c(total_reward, x_pos, remaining_time, epsilon))
+
+ggplot() +
+  geom_smooth(data = dat.11.temp %>% filter(!name %in% c("epsilon", "remaining_time")), aes(x = episode, y = value, color = name)) +
+  geom_line(data = dat.11.temp %>% filter(name == "epsilon"), aes(x = episode, y = value, color = name), linetype = "dashed") +
+  geom_point(data = dat.11 %>% filter(flag_get == TRUE), aes(x = episode, y = x_pos), color = "red", alpha = 0.25) +
+  #guides(color = "none") +
+  #geom_hline(yintercept = 400, linetype = "dashed") +
+  theme(legend.position = "bottom") +
+  labs(title = "Performant DQN",
+       subtitle = "Course 1-1 only",
+       x = "Episode",
+       y = "Value"
+       # caption = paste("Frame stacking, Simple movement, target network",
+       #                  "Epsilon linear decay from 1 to 0.05 across 1,000 episodes",
+       #                  "Dashed black line indicates full level time of 300",
+       #                  "Individual points highlight level completions.",
+       #                 sep = "\n")
+       ) 
+
+ggsave("outputs/1-1_performant.png", dpi = 300, width = 5, height = 4)
+```
+Mean time to run each episode.
+
+```{r}
+dat.11 %>%
+  mutate(delta = lead(computetime) - computetime) %>%
+  na.omit() %>%
+  summarize(mean = mean(delta))
+```
+Review of episodes that completed.
+
+```{r}
+dat.11 %>%
+  filter(flag_get == TRUE) %>%
+  dim()
+
+dat.11 %>%
+  filter(flag_get == TRUE) %>%
+  tail() %>%
+  select(episode, flag_get, x_pos, steps) %>%
+  knitr::kable()
+```
+
+Review of traces that may be of interest.
+
+```{r}
+dat.11 %>%
+  filter(episode %% 250 == 1) %>%
+  filter(flag_get == TRUE)
+```
+
+## Training on all levels
+
+
+```{r}
+
+dat.all_levels = read_csv('inputs/log_all_levels_no_exclusions.csv') %>%
+  rename(remaining_time = `time...4`) %>%
+  rename(computetime = `time...12`)
+```
+Training with all levels (ie., not removing levels with puzzle elements) results in a separation between x_position and the averaged reward. Note that in the figure below, the 'wobble' in the epsilon is a reflection of the `geom_smooth` call, and not a reflection of instability of the epsilon which decays linearly. This is corrected in some of the other figures, but as a matter of convenience was not done so here.
+
+```{r}
+dat.all_levels %>%
+  left_join(course_sizes) %>%
+  left_join(course_durations) %>%
+  mutate(epsilon = epsilon * 500) %>%
+  pivot_longer(cols = c(total_reward, x_pos, remaining_time, epsilon)) %>%
+  ggplot(aes(x = episode, y = value, color = name)) +
+  geom_smooth()
+  #geom_point(alpha = 0.05)
+
+```
+
+
+\newpage
+## Training on all but excluded levels
+
+Training results from the nominally performant architecture trained on all levels (to the exclusions of puzzle levels).
+
+```{r}
+dat.excluded.raw = read_csv('inputs/log_puzzles_excluded.csv') %>%
+  rename(remaining_time = `time...4`) %>%
+  rename(computetime = `time...12`)
+
+dat.excluded = dat.excluded.raw %>%
+  left_join(course_sizes) %>%
+  left_join(course_durations) %>%
+  mutate(remaining_time_fraction = remaining_time / course_duration_seconds)
+```
+
+Quick overview of performance. Suggests that additional training may continue to yield improvements.
+
+Notably no major divergence between x_pos and reward which could indicate degenerate training.
+
+```{r}
+maxscaling = dat.excluded %>% summarize(mean_reward = mean(total_reward)) %>% pull() * 2
+
+dat.excluded %>%
+  left_join(course_durations)
+
+dat.excluded.summary = dat.excluded %>%
+  mutate(epsilon = epsilon * maxscaling,
+         remaining_time_fraction = remaining_time_fraction * maxscaling) %>%
+  select(episode, total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction) %>%
+  pivot_longer(cols = c(total_reward, x_pos, remaining_time, epsilon, remaining_time_fraction))
+
+ggplot() +
+  geom_hline(yintercept = maxscaling, linetype = "dashed", color = "gray") +
+  geom_smooth(data = dat.excluded.summary %>% filter(!name %in% c("epsilon")), aes(x = episode, y = value, color = name)) +
+  geom_line(data = dat.excluded.summary %>% filter(name == "epsilon"), aes(x = episode, y = value), linetype = "dashed") +
+  labs(caption = paste0("Epsilon has been rescaled for viewing and",
+  "and is not scaled to the y-axis [1.0 -> 0.005]\n",
+  "Likewise, remaining_time_fraction is scaled from [1, 0]"),
+       title = "Performance of revised code",
+       subtitle = "")
+```
+
+
+```{r}
+dat.excluded %>%
+  filter(episode > 2000) %>%
+  bind_rows(tibble(course = c('4-4', '7-4', '8-4'))) %>%
+    ggplot() +
+    geom_vline(aes(xintercept = width), linetype = 'dashed', color = 'red', alpha = 0.75) + 
+    #geom_histogram(aes(x = x_pos)) + 
+    geom_point(aes(x = x_pos, y = total_reward, color = episode), alpha = 0.4) +
+    facet_wrap( ~ course, ncol = 4) +
+  labs(title = "Progress relative to approximate end of level",
+       subtitle = "Generative AI contributed meaningfully to code revisions, simple movement (actionspace)",
+       caption = paste0("NB., level ends (dashed red line) are approximate (likely overestimates) as per separate image captures.\n",
+                        "See https://www.vgmaps.com/Atlas/NES/index.htm#SuperMarioBros\n",
+                        "for more details.\n",
+                        "Courses 4-4, 7-4, 8-4 not trained upon\n",
+                        "First 2k episodes (epsilon-greedy) omitted"),
+       x = "X-position\n(RAM value from emulator)",
+       y = "Episode reward")
+
+ggsave('outputs/revised_attempt_performance_relative_to_level_completion_excluded_levels.png', 
+       dpi = 300, height = 8.5, width = 11)
+
+ggsave('outputs/revised_attempt_performance_relative_to_level_completion_excluded_levels.pdf', 
+       dpi = 300, height = 8.5, width = 11)
+
+#ggsave('outputs/revised_attempt_performance_relative_to_level_completion_excluded_levels.svg',
+#       height = 12, width = 12)
+
+
+```
+
+As before, a set of traces that might be interesting to manually review.
+
+```{r}
+dat.excluded %>%
+  filter(episode %% 250 == 1)
+```
+
