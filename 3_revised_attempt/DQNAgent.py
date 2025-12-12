@@ -97,8 +97,12 @@ class DQNAgent():
         self.TRIM_FRAME_WIDTH  = self.FRAME_WIDTH  - self.HTRIM - self.HTRIM_RIGHT
         self.ADJ_FRAME_HEIGHT = 100 # downscaled from trimmed
         self.ADJ_FRAME_WIDTH = 100  # 
-        
-        self.bestXPosition = -1
+
+        # initialize as a dictionary for each course
+        self.bestXPosition = {}
+        for i in range(1, 9):
+            for j in range(1, 5):
+                self.bestXPosition[f"{i}-{j}"] = -1
 
 
         # environment initialization
@@ -346,9 +350,11 @@ class DQNAgent():
             if terminated or truncated:
                 break
 
-        if info['x_pos'] > self.bestXPosition:
-            self.bestXPosition = info['x_pos']
-            bestDir = f'{self.savedSequencesDir}/best/{self.bestXPosition}_{self.episode}'
+        course = f"{info['world']}-{info['stage']}"
+        
+        if info['x_pos'] > self.bestXPosition[course]:
+            self.bestXPosition[course] = info['x_pos']
+            bestDir = f'{self.savedSequencesDir}/best/{course}/xpos_{self.bestXPosition[course]}__ep_{self.episode}'
             os.makedirs(bestDir, exist_ok = True)
             for i, frameStateTuple in enumerate(trace):
                 helpers.saveDiagnosticImage(bestDir, *frameStateTuple)
