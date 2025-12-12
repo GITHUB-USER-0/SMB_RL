@@ -153,6 +153,7 @@ def tensorify(frame, method = 'fast'):
 def initializeEnvironment(rom = 'v0', 
                           randomLevel = True, 
                           stagesList = ['1-1'], 
+                          excludeList = None,
                           buttonList = [['NOOP']]):
     """Initialize environment in gymnasium. 
     Sets the list of acceptable actions.
@@ -184,12 +185,41 @@ def initializeEnvironment(rom = 'v0',
         print("Error in ROM selection.")
         return(None)
 
+    ALL_STAGES = [
+        "1-1","1-2","1-3","1-4",
+        "2-1","2-2","2-3","2-4",
+        "3-1","3-2","3-3","3-4",
+        "4-1","4-2","4-3","4-4",
+        "5-1","5-2","5-3","5-4",
+        "6-1","6-2","6-3","6-4",
+        "7-1","7-2","7-3","7-4",
+        "8-1","8-2","8-3","8-4"
+    ]
+
+    if stagesList and excludeList:
+        raise ValueError("Specify either stagesList OR excludeList, not both.")
+
+    if stagesList is not None:
+        print("Playing selection of stages")
+        for s in stagesList:
+            if s not in ALL_STAGES:
+                raise ValueError(f"Invalid stage '{s}'. Must be one of {ALL_STAGES}.")
+        selected_stages = stagesList
+
+    elif excludeList is not None:
+        print("Excluding specific stages")
+        selected_stages = [s for s in ALL_STAGES if s not in excludeList]
+        if len(selected_stages) == 0:
+            raise ValueError("Excluding all stages leaves no playable levels.")
+    else:
+        selected_stages = None
+
     # as per documentation, SuperMarioBrosRandomStages-v0 will randomly select world, level combinations
     if randomLevel:
         s = s.split('-')
         s = 'RandomStages-'.join(s)
 
-    if stagesList:
+    if selected_stages is not None:
         env = gym_super_mario_bros.make(s, stages = stagesList)
     else:
         env = gym_super_mario_bros.make(s)

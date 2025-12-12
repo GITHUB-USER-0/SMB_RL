@@ -84,7 +84,7 @@ class DQNAgent():
         self.saveImageFrequency = saveImageFrequency
         self.buttonList = buttonList # name is descriptive and intentional, this doesn't become an actionSpace until it comes out from gymnasium
         self.stagesList = stagesList
-        
+        self.excludeList = excludeList
 
 
         # constants related to preprocessing
