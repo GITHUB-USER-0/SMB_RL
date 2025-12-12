@@ -376,8 +376,8 @@ class DQNAgent():
         """Loop over episodes, periodically save models and log rewards."""
 
         self.epsilon_start = 1.0
-        self.epsilon_end = 0.1
-        self.decay_episodes = numEpisodes // 2
+        self.epsilon_end = 0.005
+        self.decay_episodes = numEpisodes // 10
     
         for i in range(numEpisodes):
             if i < 10:
