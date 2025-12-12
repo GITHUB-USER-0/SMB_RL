@@ -109,6 +109,7 @@ class DQNAgent():
         print(f"Initializing gymnasium environment ({rom})")
         self.env, self.actionSpace = helpers.initializeEnvironment(stagesList = self.stagesList, 
                                                                    buttonList = self.buttonList,
+                                                                   excludeList = self.excludeList,
                                                                    rom = self.rom)
       
         # set up Q and D (Q network and replay buffer) 
@@ -169,6 +170,7 @@ class DQNAgent():
     def selectAction(self, phi):
         # select a_t = max_a Q∗(φ(st), a; θ)
         ##phi = phi.unsqueeze(0) # (c, w, h) -> (1, c, w, h)
+        phi = phi.to(self.device)
         if random() < self.epsilon:
             epsilonFlag = True
             return( (randint(0, len(self.buttonList) - 1), epsilonFlag) ) #randint is inclusive of right   
@@ -246,8 +248,7 @@ class DQNAgent():
         # implementation of stacked frames leveraged generative AI
         def getStackedState():
             """ concatenate multiple frames together (deque -> tensor) """
-            return torch.cat(list(frameStack), dim=0).unsqueeze(0)
-            
+            return torch.cat(list(frameStack), dim=0).unsqueeze(0).to(self.device)            
         step = -1
         trace = [] # add a trace that keeps states in memory, then write it, if it is a new record
         
