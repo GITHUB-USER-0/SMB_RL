@@ -4,7 +4,7 @@ This contains attempts and commentary for DQN on Super Mario Bros. (1985).
 
 A brief overview is provided below:
 
-There are 4 different folders containing core code for attempts. The commentary folder contains various musings and was renamed from what I had originally called documentation. 
+There are 4 different folders containing core code for attempts. The commentary folder contains various musings and was renamed from what I had originally called documentation. A review of training sessions as well as corresponding figure generation is contained within the analysis folder.
 
 A more detailed overview is provided below:
 
@@ -38,32 +38,47 @@ A more detailed overview is provided below:
    * log.csv - a trace of results including additional metadata relative to prior logging attempts, ~5k epochs. A separate copy of this file is contained within Commentary
   
 **SMB_RL/3_revised_attempt** : a third attempt that tries to simplify some of the code
- * helpers.py
- * DQNAgent.py
- * replay_buffer.py
- * DQN.py
+ * helpers.py - as before
+ * DQNAgent.py - as before
+ * training_run.ipynb - an example of a training run, minimally configured
+ * replay_buffer.py - as before
+ * DQN.py - as before
+ * SMB_RL\3_revised_attempt\results\2025_12_10__03_13_18 - overnight 
+   * log.csv - the result of training data
+   * config.json - the configuration of various hyperparameters
+ * SMB_RL\3_revised_attempt\results\2025_12_10__03_13_18 - overnight\savedModels 
+   * 4000.pth - one of the later models saved
+
 
 **SMB_RL/commentary** : a folder containing a variety of notebooks that incorporate thoughts on the process as well as interacting with the provided code.
- * tas_inputs.csv - a processed output file of TAS inputs from "happylee-supermariobros-europe-warps.fm2", this is used in "repitition_in_TAS_inputs.rmd".
+ 
  * on TAS and ROMs.ipynb - comments on the potential utility of TAS as sources of curated inputs, validation of the ROM in question, and the unfortunate conclusion that the emulator in use does not align with FCEUX.
  * action_space.ipynb - comments on the action spaces available
  * rewards.ipynb - comments on the reward function in use including its limitations
  * repetition_in_TAS_inputs.Rmd - this is used to make claims about the repetition of inputs across frames which serves as a justification for frame skipping
  * preprocessing frames.ipynb - comments on preprocessing of frames, trimming and the use or absence of grayscaling
- * on different SMB courses.ipynb - comments on different course structrues and the challenges that they could present to an agent. Of note, this contains the *a priori* hypothesis that the puzzle levels might present a challenge for training.
- * **analysis of an attempt** : this corresponds to analysis from 1_attempt
-   * perEpisodeRewards.csv - duplicate of SMB_RL/1_attempt/perEpisodeRewards.csv
-   * training_round_dss2q_code.png - demonstration of limited learning, with extreme outliers as well as the singular level that reached the flagpole across ~12.8k episodes.
-   * per_course_rewards_puzzle_highlight.png - 
-   * smb_one_long_training.Rmd
-   * PDF_link_to_box.md - a link to a knitted PDF output from `smb_one_long_training.Rmd` as the file would not render properly on GitHub
-   * level_categorization.csv - a manual categorization of levels as used in `smb_one_long_training.Rmd`
- * **chatgpt_revision_of_implementation/** : commentary for the 2_chatGPT_revision code
-   * log.csv - output from a longer training session (~5k epochs), where some improvement is shown, but it remains unsolved.
-   * chatgpt_version_performance_relative_to_level_completion.png - a figure documenting that the rewards of the agent relative to the nominal end of the level, included at the conclusion of the paper.
-   * alternative_approach.png - a figure summarizing the performance of the agent over a long training session
-   * comments.Rmd - a longer set of comments on the training run of this
-   * course_durations.csv - a set of course lengths (widths) used in comments.Rmd to make the chatgpt_version_performance_relative_to_level_completion.png figure
+ * on different SMB courses.ipynb - comments on different course structrues and the challenges that they could present to an agent. Of note, this contains the a priori hypothesis that the puzzle levels might present a challenge for training.   
+
+**SMB_RL\analysis** : a folder containing consolidated analysis of various training sessions and other elements.
+   * combined_analysis.Rmd - combined analysis of training elements with figure generation
+   * repetition_in_TAS_inputs.Rmd - an exploration of the repetition of actions in TAS inputs to determine an appropriate amount of action-repetition
+   **SMB_RL\analysis\inputs** :
+     * log_puzzles_excluded.csv - training log from a not performant training session on all levels with the exception of levels with puzzle elements
+     * log_all_levels_no_exclusions.csv - training log from a not performant training session on all levels with an almost identical architecture as the performant 1-1 agent
+     * log_performant1-1.csv - training log from a performant DQN network trained on just 1-1
+     * 2025-11-24.csv - a training log from that day. The training did not result in a performant model, but did yield key insights
+     * tas_inputs.csv - a processed output file of TAS inputs from "happylee-supermariobros-europe-warps.fm2", this is used in "repitition_in_TAS_inputs.rmd".   * sizes.csv - course level sizes (width, height)
+	 * level_categorization.csv - a manual categorization of levels as used in analysis
+	 * course_durations.csv - a set of course lengths (widths) used in comments.Rmd to make the chatgpt_version_performance_relative_to_level_completion.png figure
+  **SMB_RL\analysis\outputs** : a folder containing generated outputs, ie., images and/or pdfs that are used in the manuscript
+    * revised_attempt_performance_relative_to_level_completion_excluded_levels.png
+    * revised_attempt_performance_relative_to_level_completion_excluded_levels.pdf
+    * repetition_in_inputs_TAS.png
+    * training_round_dss2q_code.png
+    * per_course_rewards_puzzle_highlight.png
+    * 1-1_performant.png - demonstration of a performant DQN agent training session, Figure 4.
+  **SMB_RL\analysis\getting_world_sizes** : 
+    * downloading_pngs.py - code to acquire world sizes as based on external source of level layouts
 
 **SMB_RL/embeddedMedia** : various media generated that are referenced in notebooks
  * v0_vs_v3_TAS_inputs.mp4 - a comparison of the same sequence of TAS inputs yielding different outputs in the two different ROM files. This indicates that the differences between ROMs is not purely graphical in nature. See `on TAS and ROMs.ipynb`
