@@ -71,11 +71,10 @@ A more detailed overview is provided below:
 	 * level_categorization.csv - a manual categorization of levels as used in analysis
 	 * course_durations.csv - a set of course lengths (widths) used in comments.Rmd to make the chatgpt_version_performance_relative_to_level_completion.png figure
   **SMB_RL\analysis\outputs** : a folder containing generated outputs, ie., images and/or pdfs that are used in the manuscript
-    * revised_attempt_performance_relative_to_level_completion_excluded_levels.png
-    * revised_attempt_performance_relative_to_level_completion_excluded_levels.pdf
-    * repetition_in_inputs_TAS.png
-    * training_round_dss2q_code.png
-    * per_course_rewards_puzzle_highlight.png
+    * revised_attempt_performance_relative_to_level_completion_excluded_levels.png - final page of manuscript, performance of the 1-1 architecture on all levels, not wholly performant but some positive signs.
+    * repetition_in_inputs_TAS.png - a visualization of the repetition of inputs over a TAS 
+    * training_round_dss2q_code.png - a demonstration of degenerate training rewards being higher valued than a completed level (not in paper, used in appendix of presentation)
+    * per_course_rewards_puzzle_highlight.png - a highlight of training with flawed code that nonetheless revealed the potential for degenerate training on puzzle levels. See figure 2.
     * 1-1_performant.png - demonstration of a performant DQN agent training session, Figure 4.
   **SMB_RL\analysis\getting_world_sizes** : 
     * downloading_pngs.py - code to acquire world sizes as based on external source of level layouts
