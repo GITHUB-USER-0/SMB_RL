@@ -60,22 +60,24 @@ A more detailed overview is provided below:
  * on different SMB courses.ipynb - comments on different course structrues and the challenges that they could present to an agent. Of note, this contains the a priori hypothesis that the puzzle levels might present a challenge for training.   
 
 **SMB_RL\analysis** : a folder containing consolidated analysis of various training sessions and other elements.
-   * combined_analysis.Rmd - combined analysis of training elements with figure generation
-   * repetition_in_TAS_inputs.Rmd - an exploration of the repetition of actions in TAS inputs to determine an appropriate amount of action-repetition
-   **SMB_RL\analysis\inputs** :
-     * log_puzzles_excluded.csv - training log from a not performant training session on all levels with the exception of levels with puzzle elements
-     * log_all_levels_no_exclusions.csv - training log from a not performant training session on all levels with an almost identical architecture as the performant 1-1 agent
-     * log_performant1-1.csv - training log from a performant DQN network trained on just 1-1
-     * 2025-11-24.csv - a training log from that day. The training did not result in a performant model, but did yield key insights
-     * tas_inputs.csv - a processed output file of TAS inputs from "happylee-supermariobros-europe-warps.fm2", this is used in "repitition_in_TAS_inputs.rmd".   * sizes.csv - course level sizes (width, height)
-	 * level_categorization.csv - a manual categorization of levels as used in analysis
-	 * course_durations.csv - a set of course lengths (widths) used in comments.Rmd to make the chatgpt_version_performance_relative_to_level_completion.png figure
+* combined_analysis.Rmd - combined analysis of training elements with figure generation
+* repetition_in_TAS_inputs.Rmd - an exploration of the repetition of actions in TAS inputs to determine an appropriate amount of action-repetition
+* **SMB_RL\analysis\inputs** :
+  * log_puzzles_excluded.csv - training log from a not performant training session on all levels with the exception of levels with puzzle elements
+  * log_all_levels_no_exclusions.csv - training log from a not performant training session on all levels with an almost identical architecture as the performant 1-1 agent
+  * log_performant1-1.csv - training log from a performant DQN network trained on just 1-1
+  * 2025-11-24.csv - a training log from that day. The training did not result in a performant model, but did yield key insights
+  * tas_inputs.csv - a processed output file of TAS inputs from "happylee-supermariobros-europe-warps.fm2", this is used in "repitition_in_TAS_inputs.rmd".   * sizes.csv - course level sizes (width, height)
+  * level_categorization.csv - a manual categorization of levels as used in analysis
+  * course_durations.csv - a set of course lengths (widths) used in comments.Rmd to make the chatgpt_version_performance_relative_to_level_completion.png figure
+	 
   **SMB_RL\analysis\outputs** : a folder containing generated outputs, ie., images and/or pdfs that are used in the manuscript
     * revised_attempt_performance_relative_to_level_completion_excluded_levels.png - final page of manuscript, performance of the 1-1 architecture on all levels, not wholly performant but some positive signs.
     * repetition_in_inputs_TAS.png - a visualization of the repetition of inputs over a TAS 
     * training_round_dss2q_code.png - a demonstration of degenerate training rewards being higher valued than a completed level (not in paper, used in appendix of presentation)
     * per_course_rewards_puzzle_highlight.png - a highlight of training with flawed code that nonetheless revealed the potential for degenerate training on puzzle levels. See figure 2.
     * 1-1_performant.png - demonstration of a performant DQN agent training session, Figure 4.
+	
   **SMB_RL\analysis\getting_world_sizes** : 
     * downloading_pngs.py - code to acquire world sizes as based on external source of level layouts
 
